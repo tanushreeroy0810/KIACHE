@@ -1,21 +1,1070 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>KIACHE? — Scan. Decode. Understand.</title>
-    <meta name="description" content="Mobile-first food label reader with barcode lookup, OCR, ingredient flags, nutrition context, ingredient dictionary, product comparison, and guided food questions." />
-    <meta property="og:title" content="KIACHE? — Scan. Decode. Understand." />
-    <meta property="og:description" content="Mobile-first food label reader with barcode lookup, OCR, ingredient flags, nutrition context, ingredient dictionary, product comparison, and guided food questions." />
-    <meta property="og:type" content="website" />
-    <meta name="twitter:card" content="summary_large_image" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=DM+Serif+Display&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>KIACHE? — Scan. Decode. Understand.</title>
+<meta name="description" content="KIACHE is a mobile-first food label reader with barcode lookup, OCR, ingredient flags, nutrition context and guided food questions." />
+<meta property="og:title" content="KIACHE? — Scan. Decode. Understand." />
+<meta property="og:description" content="KIACHE is a mobile-first food label reader with barcode lookup, OCR, ingredient flags, nutrition context and guided food questions." />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary_large_image" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<script defer src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<style>
+:root{
+  --cream:#FBF8F2; --white:#FFFFFF; --ink:#26302A; --teal:#3F5D4B;
+  --teal-soft:#E8F0EA; --ochre:#B89568; --gold-soft:#E6D4BA;
+  --purple:#6A4C93; --violet-deep:#F1EBF7; --violet-mid:#6A4C93;
+  --lav:#F1EBF7; --green:#E8F0EA; --line:#DED6C9; --pink:#6A4C93; --pink-soft:#D8C7E5;
+  --green-bright:#6A4C93;
+  --tan:#B89568; --tan-soft:#F1E6D7; --bg-deep:#FBF8F2; --bg-deep2:#F6F1E9;
+  --muted:rgba(11,13,12,.58); --danger:#8C2E27; --shadow:0 18px 45px rgba(11,13,12,.10);
+  --good:#1E8F4E; --good-soft:#E7EFE3; --warn:#8C6A1F; --warn-soft:#F1EADA; --bad:#8C2E27; --bad-soft:#F1E1DD;
+  --score-a:#1E8F4E; --score-b:#7CB93E; --score-c:#C99A2E; --score-d:#B06A2C; --score-e:#8C2E27;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;color:var(--ink);font-family:"DM Sans",sans-serif;
+ background-color:var(--cream);
+ -webkit-font-smoothing:antialiased}
+button,input,select{font:inherit}
+button{cursor:pointer}
+.app{min-height:100vh}
+.hidden{display:none!important}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid rgba(59,31,99,.4);outline-offset:3px}
+.entry{min-height:100vh;display:grid;place-items:center;padding:20px;background:var(--cream)}
+.entry-card{width:min(800px,100%);background:var(--white);border:1px solid rgba(11,13,12,.1);border-radius:34px;padding:48px;box-shadow:var(--shadow)}
+.brand{font-weight:800;letter-spacing:-.06em;font-size:40px}
+.brand span{color:var(--green-bright)}
+.eyebrow{text-transform:uppercase;letter-spacing:.16em;font-weight:700;color:var(--muted);font-size:14px}
+h1,h2,h3{font-family:"DM Serif Display",serif;font-weight:400;line-height:1.05;margin:0;color:var(--ink)}
+.entry h1{font-size:clamp(46px,7.5vw,78px);max-width:680px;margin:18px 0}
+.entry p{font-size:20px;line-height:1.6;color:var(--muted);max-width:640px}
+.lang-row{display:flex;flex-wrap:wrap;gap:9px;margin:24px 0}
+.lang{border:1px solid var(--line);background:#fff;border-radius:999px;padding:11px 17px;color:var(--ink);font-size:17px}
+.lang.active{background:var(--teal);color:#fff;border-color:var(--teal)}
+.name-input{width:100%;border:1px solid var(--line);background:#fff;border-radius:16px;padding:16px 18px;margin:6px 0 15px;font-size:17px}
+.actions{display:flex;gap:12px;flex-wrap:wrap}
+.btn{border:0;border-radius:18px;padding:15px 22px;font-weight:700;font-size:17px;transition:.2s ease;min-height:50px}
+.btn:hover{transform:translateY(-2px)}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--teal);color:white;box-shadow:0 8px 20px rgba(21,94,89,.28)}
+.btn-secondary{background:var(--lav);color:var(--ink)}
+.btn-ghost{background:transparent;border:1px solid var(--line)}
+.credit{font-size:13px!important;margin-top:25px;color:var(--muted)!important}
+.mascot-track{position:relative;height:64px;overflow:hidden;margin:6px 0 2px}
+.mascot{position:absolute;bottom:2px;left:0;animation:mascotMove 6.5s ease-in-out infinite}
+.mascot svg{display:block;animation:mascotHop .5s ease-in-out infinite}
+.mascot-track.small{height:52px}
+.mascot-track.small .mascot svg{width:38px;height:38px}
+@keyframes mascotMove{0%,100%{left:0}50%{left:calc(100% - 46px)}}
+@keyframes mascotHop{0%,100%{transform:translateY(0) scaleY(1)}50%{transform:translateY(-9px) scaleY(1.05)}}
+@media(prefers-reduced-motion:reduce){.mascot,.mascot svg{animation:none}}
+.how-it-works{display:grid;gap:12px;margin:22px 0;padding:20px;background:var(--teal-soft);border-radius:20px}
+.how-step{display:flex;gap:12px;align-items:flex-start;font-size:14px;color:var(--ink);line-height:1.5}
+.how-num{flex-shrink:0;width:26px;height:26px;border-radius:50%;background:var(--teal);color:white;display:grid;place-items:center;font-weight:800;font-size:13px}
+
+.shell{display:grid;grid-template-columns:265px 1fr;min-height:100vh}
+.sidebar{position:sticky;top:0;height:100vh;background:linear-gradient(175deg,var(--teal-soft) 0%,var(--lav) 100%);color:var(--ink);padding:30px 18px;display:flex;flex-direction:column;border-right:1px solid rgba(24,32,31,.06)}
+.sidebar .brand{color:var(--ink);padding:0 10px 35px;font-size:42px}
+.nav{display:grid;gap:8px}
+.nav button{border:0;background:transparent;color:var(--ink);padding:15px 16px;border-radius:16px;text-align:left;font-weight:700;font-size:18px;transition:.2s;display:flex;align-items:center;gap:14px}
+.nav button:hover{background:rgba(24,32,31,.06)}
+.nav button.active{background:var(--ochre);color:var(--ink)}
+.nav-icon{font-size:26px;display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;text-align:center;line-height:1;flex-shrink:0}
+.nav-icon svg{width:23px;height:23px;display:block}
+.note{margin-top:auto;background:var(--white);border:1px solid rgba(24,32,31,.06);padding:20px;border-radius:22px;color:var(--ink);font-size:15px;box-shadow:0 8px 22px rgba(24,32,31,.05)}
+.note strong{display:block;color:var(--ink);font-size:13px;letter-spacing:.12em;margin-bottom:8px}
+.user{border-top:1px solid rgba(24,32,31,.1);margin-top:18px;padding:18px 5px 0;display:flex;gap:10px;align-items:center;font-size:16px}
+.avatar{width:42px;height:42px;border-radius:50%;background:var(--gold-soft);color:var(--ink);display:grid;place-items:center;font-weight:800;font-size:17px}
+.credit-side{font-size:12px;color:var(--muted);margin-top:12px}
+.main{padding:32px;max-width:1250px;width:100%;margin:auto}
+.app-topbar{position:relative;display:flex;justify-content:space-between;align-items:flex-start;gap:15px;margin-bottom:28px;padding-bottom:6px}
+.app-topbar .brand{font-size:38px;color:var(--ink)}
+.app-topbar .brand span{color:var(--green-bright)}
+.app-topbar-actions{display:flex;align-items:center;gap:14px}
+.lang-select-top{border:1px solid var(--line);background:var(--white);border-radius:14px;padding:12px 34px 12px 16px;font-weight:700;font-size:16px;box-shadow:0 8px 20px rgba(24,32,31,.08);
+ appearance:none;-webkit-appearance:none;-moz-appearance:none;
+ background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M5 8l5 5 5-5" fill="none" stroke="%23372A5C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+ background-repeat:no-repeat;background-position:right 12px center;background-size:14px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:25px}
+.top h2{font-size:50px;color:var(--ink)}
+.top .eyebrow{color:var(--muted)}
+.circle-btn{width:54px;height:54px;border-radius:50%;border:1px solid var(--line);background:var(--white);box-shadow:0 8px 20px rgba(24,32,31,.08);display:grid;place-items:center;transition:.2s;padding:0;color:var(--teal)}
+.circle-btn svg{width:22px;height:22px;display:block}
+.circle-btn.active{background:var(--ochre);color:var(--ink);border-color:var(--ochre)}
+.circle-btn:hover{transform:translateY(-2px);box-shadow:0 12px 26px rgba(24,32,31,.14)}
+.qr-icon{width:22px;height:22px;flex-shrink:0;display:inline-block;background-color:currentColor;
+ -webkit-mask-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M8 32V16a8 8 0 018-8h16v9H17a1 1 0 00-1 1v14zM68 9h16a8 8 0 018 8v16h-9V17a1 1 0 00-1-1H68zM91 68v16a8 8 0 01-8 8H67v-9h16a1 1 0 001-1V68zM32 92H16a8 8 0 01-8-8V68h9v16a1 1 0 001 1h14z"/><circle cx="50" cy="50" r="16"/></svg>');
+ mask-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M8 32V16a8 8 0 018-8h16v9H17a1 1 0 00-1 1v14zM68 9h16a8 8 0 018 8v16h-9V17a1 1 0 00-1-1H68zM91 68v16a8 8 0 01-8 8H67v-9h16a1 1 0 001-1V68zM32 92H16a8 8 0 01-8-8V68h9v16a1 1 0 001 1h14z"/><circle cx="50" cy="50" r="16"/></svg>');
+ -webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat}
+.grid{display:grid;grid-template-columns:1.45fr .8fr;gap:18px}
+.card{background:var(--white);border:1px solid rgba(24,32,31,.08);border-radius:28px;box-shadow:0 10px 30px rgba(24,32,31,.07);padding:30px;position:relative;overflow:hidden;font-size:17px;transition:transform .25s ease,box-shadow .25s ease}
+.card:hover{transform:translateY(-3px);box-shadow:0 16px 36px rgba(24,32,31,.1)}
+.page{animation:none}
+.page-enter{animation:pageIn .35s ease}
+@keyframes pageIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.hero{background:var(--green);min-height:370px;display:flex;flex-direction:column;justify-content:center}
+.hero h1{font-size:clamp(46px,5.5vw,72px);max-width:740px;position:relative;z-index:1}
+.hero p{max-width:640px;color:var(--ink);font-size:19px;line-height:1.6;position:relative;z-index:1}
+.hero .btn{align-self:flex-start;position:relative;z-index:1}
+.fact{background:var(--tan-soft)}
+.fact h3{font-size:32px;margin:9px 0 13px}
+.fact p{font-size:22px;line-height:1.6;color:var(--ink)}
+.fact .tag{display:inline-block;background:var(--tan);color:var(--ink);border-radius:999px;padding:8px 12px;font-size:12px;font-weight:800;letter-spacing:.1em}
+.section{margin-top:24px}
+.section-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.section-head h3{font-size:33px;color:var(--ink)}
+.recent-empty{padding:25px;text-align:center;border:1px dashed #CFC9BB;border-radius:20px;color:var(--muted);font-size:16px}
+.recent-scan{width:100%;border:0;border-bottom:1px solid var(--line);background:transparent;padding:10px 0;color:var(--ink);text-align:center;font-size:16px;line-height:1.35}
+.recent-scan:last-child{border-bottom:0}.recent-scan small{color:var(--muted)}.recent-scan:hover{color:var(--purple)}
+
+.scanner{max-width:760px;margin:0 auto}
+.scanner-frame{height:440px;background:#18251F;min-height:430px;border-radius:30px;position:relative;overflow:hidden;display:grid;place-items:center}
+.scan-corner{position:absolute;width:55px;height:55px;border-color:var(--gold-soft);border-style:solid;z-index:3}
+.c1{top:30px;left:30px;border-width:5px 0 0 5px}.c2{top:30px;right:30px;border-width:5px 5px 0 0}
+.c3{bottom:30px;left:30px;border-width:0 0 5px 5px}.c4{bottom:30px;right:30px;border-width:0 5px 5px 0}
+.feedback{position:absolute;inset:0;display:grid;place-items:center;color:white;text-align:center;font-size:27px;font-weight:700;line-height:1.35;padding:30px;transition:.35s;z-index:4;text-shadow:0 2px 12px rgba(0,0,0,.45);pointer-events:none}
+.scan-line{position:absolute;left:12%;right:12%;height:2px;background:var(--gold-soft);top:35%;box-shadow:0 0 18px var(--gold-soft);animation:scan 2.2s infinite ease-in-out;z-index:3}
+@keyframes scan{0%,100%{top:30%}50%{top:70%}}
+.scan-qr-badge{position:absolute;top:24px;left:24px;display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);border-radius:14px;padding:8px 14px;color:#FFFFFF;font-weight:700;font-size:14px;z-index:3}
+.scan-qr-badge .qr-icon{width:20px;height:20px}
+.upload-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:18px}
+.file{display:none}
+.result-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:18px}
+.pill{display:inline-block;border-radius:999px;padding:8px 12px;background:var(--green);font-size:13px;font-weight:800;margin:4px}
+.pill-good{background:var(--good-soft);color:var(--ink)}
+.pill-warn{background:var(--warn-soft);color:var(--ink)}
+.pill-bad{background:var(--bad-soft);color:var(--ink)}
+.badge-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:12px 0}
+.score-badge{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;color:white;font-family:"DM Serif Display";font-size:30px;flex-shrink:0;box-shadow:0 6px 16px rgba(0,0,0,.18)}
+.score-meta{font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.nutrient-bars{display:grid;gap:10px;margin-top:10px}
+.nutrient-bar-row{display:flex;align-items:center;gap:10px;font-size:14px}
+.nutrient-bar-row .label{width:90px;flex-shrink:0;font-weight:700;color:var(--ink)}
+.nutrient-bar-track{flex:1;height:9px;border-radius:99px;background:#EDEAE0;overflow:hidden}
+.nutrient-bar-fill{height:100%;border-radius:99px}
+.nutrient-bar-row .level{width:64px;text-align:right;font-weight:800;font-size:12px;text-transform:uppercase}
+.barcode-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px}
+.barcode-row input{flex:1;min-width:180px;border:1px solid var(--line);border-radius:14px;padding:14px 16px;font-size:16px}
+.scan-mode-toggle{display:flex;gap:8px;background:var(--lav);padding:6px;border-radius:16px;margin-bottom:16px;width:fit-content}
+.scan-mode-toggle button{border:0;background:transparent;color:var(--ink);padding:10px 18px;border-radius:12px;font-weight:700;font-size:15px}
+.scan-mode-toggle button.active{background:var(--white);color:var(--ink);box-shadow:0 4px 12px rgba(24,32,31,.08)}
+.result-card p{line-height:1.6;color:var(--muted);font-size:16px}
+.chat{position:fixed;right:22px;bottom:96px;width:min(400px,calc(100vw - 30px));background:var(--white);border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow);overflow:hidden;z-index:20;display:flex;flex-direction:column}
+.chat-head{background:var(--teal);color:white;padding:16px 20px;font-weight:800;font-size:18px}
+.chat-body{height:270px;overflow:auto;padding:15px}
+.msg{padding:11px 13px;border-radius:15px;margin:7px 0;max-width:85%;line-height:1.4;font-size:15px}
+.bot{background:var(--lav)}.me{background:var(--green);margin-left:auto}
+.chat-form{display:flex;gap:8px;padding:10px;border-top:1px solid var(--line)}
+.chat-form input{flex:1;border:1px solid var(--line);border-radius:13px;padding:11px;font-size:15px}
+.chat-toggle{position:fixed;right:22px;bottom:22px;width:62px;height:62px;border-radius:50%;border:0;background:var(--purple);color:white;font-size:25px;box-shadow:0 10px 30px rgba(59,31,99,.35);z-index:21}
+
+.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.setting-row{padding:18px 0;border-bottom:1px solid #E8E3D9}
+.setting-row:last-child{border-bottom:0}
+.setting-row label{font-weight:700;display:block;margin-bottom:8px;font-size:17px}
+.setting-row small{color:var(--muted);display:block;margin-bottom:10px;font-size:15px}
+.select,.text{width:100%;border:1px solid var(--line);background:white;border-radius:15px;padding:14px;font-size:16px}
+select.select{appearance:none;-webkit-appearance:none;-moz-appearance:none;padding-right:38px;
+ background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M5 8l5 5 5-5" fill="none" stroke="%23372A5C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+ background-repeat:no-repeat;background-position:right 14px center;background-size:14px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:11px 14px;font-size:15px}
+.chip.active{background:var(--teal);color:white;border-color:var(--teal)}
+
+.history-list{display:grid;gap:12px}
+.history-item{display:flex;justify-content:space-between;gap:15px;align-items:center;background:var(--white);border:1px solid var(--line);border-radius:20px;padding:18px}
+.history-delete{border:1px solid var(--line);background:var(--white);color:var(--ink);width:34px;height:34px;border-radius:50%;font-size:15px;display:grid;place-items:center;transition:.2s}
+.history-delete:hover{background:var(--bad-soft);border-color:var(--bad)}
+.history-item strong{font-size:18px}.history-item small{color:var(--muted);font-size:14px}
+.toast{position:fixed;left:50%;bottom:25px;transform:translateX(-50%) translateY(20px);opacity:0;background:var(--ink);color:white;padding:13px 18px;border-radius:999px;transition:.3s;z-index:40;font-size:15px}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+.mobile-nav{display:none}
+.entry-card,.card,.history-item,.recent-empty,.note{text-align:center}
+.card .actions,.card .badge-row,.card .upload-row,.card .barcode-row,.card .chips{justify-content:center}
+.card .btn{align-self:center}
+.history-item{flex-direction:column}
+.history-item>div{justify-content:center}
+.result-card .nutrient-bar-row{justify-content:center}
+.result-card .nutrient-bar-row .label{width:auto;min-width:90px;text-align:center}
+.result-card .nutrient-bar-row .level{text-align:center}
+.scanner-frame .feedback{text-align:center}
+@media(max-width:850px){
+ .shell{display:block}
+ .sidebar{display:none}
+ .main{padding:20px 16px 110px}
+ .grid,.settings-grid,.result-grid{grid-template-columns:1fr}
+ .top h2{font-size:38px}
+ .app-topbar{margin-bottom:20px}
+ .app-topbar .brand{font-size:30px}
+ .lang-select-top{padding:10px 12px;font-size:14px}
+ .circle-btn{width:46px;height:46px}
+ .circle-btn svg{width:19px;height:19px}
+ .hero{min-height:390px}
+ .mobile-nav{display:grid;grid-template-columns:repeat(3,1fr);position:fixed;bottom:14px;left:14px;right:14px;background:var(--white);color:var(--ink);border-radius:24px;padding:10px;z-index:18;box-shadow:0 14px 34px rgba(24,32,31,.14);border:1px solid rgba(24,32,31,.07)}
+ .mobile-nav button{border:0;background:transparent;color:var(--ink);padding:11px 4px;border-radius:16px;font-size:15px;font-weight:700;display:flex;flex-direction:column;align-items:center;gap:4px}
+ .mobile-nav button.active{background:var(--ochre);color:var(--ink)}
+ .mobile-nav .nav-icon{font-size:26px}
+ .mobile-nav .qr-icon{width:24px;height:24px}
+ .card{padding:22px}
+ .scanner-frame{height:390px}
+}
+
+.scanner-frame video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#18251F;z-index:0}
+.scan-hint{position:absolute;z-index:5;left:18px;right:18px;bottom:18px;padding:10px 14px;border-radius:14px;background:rgba(24,37,31,.72);color:#fff;font-size:13px;text-align:center;backdrop-filter:blur(8px)}
+.product-search{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.product-search input{flex:1;min-width:210px;border:1px solid var(--line);border-radius:14px;padding:14px 16px;background:#fff}
+.source-note{font-size:12px!important;color:var(--muted)!important;margin-top:12px}
+.reliability-note{background:var(--tan-soft);border:1px solid #E2D1B9;border-radius:18px;padding:13px 15px;font-size:13px;line-height:1.5;color:#5A4938}
+.flag-ingredient{border:1px solid #D8C7E5;background:var(--violet-deep);border-radius:14px;padding:10px 12px;margin:6px 0;display:flex;justify-content:space-between;gap:12px;align-items:flex-start;text-align:left}
+.flag-ingredient strong{color:var(--purple)}
+.ai-question{border:1px solid var(--line);background:var(--white);border-radius:16px;padding:13px 15px;text-align:left;font-weight:700}
+.ai-answer{background:var(--green);border-radius:16px;padding:14px;line-height:1.55;text-align:left}
+.ai-topic{border:1px solid var(--line);background:#fff;border-radius:18px;padding:14px;text-align:left;margin:6px 0}
+.ai-topic button{width:100%;border:0;background:transparent;text-align:left;font-weight:800;color:var(--ink)}
+.onboarding-allergy{margin:18px 0;padding:16px;background:var(--green);border-radius:20px}
+.chat-foot{display:flex;flex-wrap:wrap;gap:6px;padding:8px 10px 12px;border-top:1px solid var(--line)}
+.chat-mode-btn{border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 11px;font-size:12px;font-weight:700;color:var(--ink)}
+.chat-mode-btn.active{background:var(--purple);color:#fff;border-color:var(--purple)}
+.chat-clear-btn{margin-left:auto;border:0;background:transparent;color:var(--muted);font-size:12px;font-weight:700}
+.dict-search{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.dict-search input{flex:1;min-width:220px;border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.dict-cat-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;justify-content:center}
+.dict-list{display:grid;gap:12px;grid-template-columns:1fr 1fr}
+.dict-card{background:var(--white);border:1px solid var(--line);border-radius:20px;padding:18px;text-align:left}
+.dict-card h4{font-family:"DM Serif Display";font-size:22px;margin:0 0 4px}
+.dict-card .dict-meta{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+.dict-card p{font-size:14px;line-height:1.55;color:var(--ink);margin:6px 0}
+.dict-card .dict-label{font-weight:800;font-size:12px;color:var(--purple);text-transform:uppercase;letter-spacing:.05em;margin-top:8px}
+.compare-inputs{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px}
+.compare-input-card{background:var(--white);border:1px solid var(--line);border-radius:20px;padding:18px}
+.compare-input-card input{width:100%;border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:8px 0}
+.compare-table{width:100%;border-collapse:collapse;margin-top:10px}
+.compare-table th,.compare-table td{padding:12px 10px;border-bottom:1px solid var(--line);font-size:14px;text-align:center}
+.compare-table th{font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.compare-table td.win{color:var(--good);font-weight:800}
+.compare-verdict{background:var(--tan-soft);border-radius:18px;padding:16px;margin-top:16px;text-align:left;font-size:15px;line-height:1.6}
+@media(max-width:850px){
+ .entry{padding:12px}
+ .entry-card{padding:28px 20px;border-radius:26px}
+ .entry h1{font-size:44px}
+ .entry p{font-size:17px}
+ .actions .btn{width:100%}
+ .scanner-frame{height:62vh;min-height:390px;max-height:620px}
+ .scan-mode-toggle{width:100%;overflow:auto}
+ .scan-mode-toggle button{white-space:nowrap;flex:1}
+ .barcode-row .btn{width:100%}
+ .product-search .btn{width:100%}
+ .chat{right:10px;bottom:90px;width:calc(100vw - 20px)}
+ .chat-body{height:330px}
+ .chat-toggle{right:14px;bottom:18px}
+ .history-item{align-items:stretch}
+ .dict-list,.compare-inputs{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div id="entry" class="entry">
+  <div class="entry-card">
+    <div class="brand">KIACHE<span>?</span></div>
+    <div class="eyebrow" style="margin-top:30px" data-i18n="welcome">Welcome to KIACHE</div>
+    <h1 data-i18n="entryTitle">Know what's really in your food.</h1>
+    <p data-i18n="entryDesc">Scan food labels, understand ingredients, and make sense of nutrition information without the noise.</p>
+
+    <div class="eyebrow" style="margin-top:26px" data-i18n="chooseLanguage">Choose your language</div>
+    <div class="lang-row" id="entryLang"></div>
+
+    <div class="onboarding-allergy">
+      <div class="eyebrow" data-i18n="allergyOnboardingTitle">Allergy preferences</div>
+      <p style="font-size:15px;margin:8px auto 12px" data-i18n="allergyOnboardingHelp">Select anything you want KIACHE to flag prominently.</p>
+      <div class="chips" id="entryAllergyChips"></div>
+    </div>
+
+    <div class="actions" style="margin-top:8px">
+      <button class="btn btn-primary" data-i18n="getStarted" onclick="enterApp()">Start with KIACHE →</button>
+    </div>
+    <div id="entryMascotSlot"></div>
+    <p class="credit">Food information should inform, not frighten.</p>
+  </div>
+</div>
+
+<div id="app" class="app hidden">
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand">KIACHE<span>?</span></div>
+      <nav class="nav">
+        <button data-page="home" onclick="showPage('home')"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 11.5 12 4l8.5 7.5"/><path d="M5.5 10v9a1 1 0 0 0 1 1h4v-6h3v6h4a1 1 0 0 0 1-1v-9"/></svg></span><span data-i18n="home">Home</span></button>
+        <button data-page="scan" onclick="showPage('scan')"><span class="nav-icon qr-icon" aria-hidden="true"></span><span data-i18n="scanNav">Scan</span></button>
+        <button data-page="history" onclick="showPage('history')"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v4h4"/><path d="M12 7.5v4.5l3 2"/></svg></span><span data-i18n="history">Scan history</span></button>
+      </nav>
+      <div class="note"><strong>KIACHE NOTE</strong>You don't need perfect choices. Just a little more information.</div>
+      <div class="user"><div class="avatar" id="avatar">?</div><div><b id="sideName">Guest</b><br><small>Curious eater</small></div></div>
+      <div class="credit-side">Developed by Tanushree Roy</div>
+    </aside>
+
+    <main class="main">
+      <div class="app-topbar">
+        <div>
+          <div class="brand">KIACHE<span>?</span></div>
+        </div>
+        <div class="app-topbar-actions">
+          <button class="circle-btn" data-page="compare" title="Compare products" onclick="showPage('compare')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="M16 21l4-4-4-4"/><path d="M20 17H4"/></svg></button>
+          <button class="circle-btn" data-page="dictionary" title="Ingredient dictionary" onclick="showPage('dictionary')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></button>
+          <button class="circle-btn" data-page="settings" title="Settings" onclick="showPage('settings')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+        </div>
+      </div>
+      <section id="page-home" class="page">
+        <div class="top">
+          <div>
+            <div class="eyebrow" data-i18n="welcome">Welcome to KIACHE</div>
+            <h2 data-i18n="homeGreetingTitle">Know what's really in your food.</h2>
+          </div>
+        </div>
+        <div class="grid">
+          <article class="card hero">
+            <div class="eyebrow" data-i18n="heroEyebrow">Know what's really in your food.</div>
+            <h1 data-i18n="heroTitle">Scan. Decode. Decide.</h1>
+            <p data-i18n="heroDesc">KIACHE reads food labels, translates unfamiliar language, explains ingredients and nutrition, and helps you make sense of what you're about to eat.</p>
+            <button class="btn btn-primary" data-i18n="scanLabel" onclick="showPage('scan')">Scan a label&nbsp; →</button>
+          </article>
+          <article class="card fact">
+            <span class="tag" data-i18n="didYouKnow">DID YOU KNOW?</span>
+            <h3 id="factTitle" data-i18n="tinyFact">A tiny food fact.</h3>
+            <p id="factText"></p>
+          </article>
+          <article class="card">
+            <div class="eyebrow" data-i18n="recentScans">RECENT SCANS</div>
+            <h3 style="font-size:33px;margin:8px 0 12px" data-i18n="savedLater">Saved for later</h3>
+            <div id="homeRecent"></div>
+          </article>
+          <article class="card" style="background:var(--lav)">
+            <div class="eyebrow" data-i18n="quickInsight">QUICK INSIGHT</div>
+            <h3 style="font-size:30px;margin:8px 0 12px" data-i18n="kiacheSnapshot">Your KIACHE snapshot</h3>
+            <div id="homeInsight"></div>
+          </article>
+        </div>
+      </section>
+
+      <section id="page-scan" class="page hidden">
+        <div class="top"><div><div class="eyebrow" data-i18n="scannerEyebrow">KIACHE / SCANNER</div><h2 data-i18n="decodeTitle">Let's decode it.</h2></div></div>
+
+        <div class="scan-mode-toggle" role="tablist">
+          <button id="modeBarcodeBtn" class="active" role="tab" aria-selected="true" onclick="setScanMode('barcode')" data-i18n="modeBarcode">Barcode / product</button>
+          <button id="modePhotoBtn" role="tab" aria-selected="false" onclick="setScanMode('photo')" data-i18n="modePhoto">Read label</button>
+        </div>
+
+        <div id="scanModeBarcode" class="scanner">
+          <div class="card" style="padding:20px;background:var(--green)">
+            <div class="eyebrow">PRODUCT LOOKUP</div>
+            <p style="font-size:15px;color:var(--ink);margin:8px 0 4px" data-i18n="barcodeIntro">Use the camera for a barcode, type the barcode, or search by a product name or ingredient.</p>
+            <div class="barcode-row">
+              <input id="barcodeInput" inputmode="numeric" placeholder="e.g. 8901058851419" data-i18n-placeholder="barcodePlaceholder">
+              <button class="btn btn-primary" data-i18n="lookUp" onclick="lookupBarcode($('barcodeInput').value.trim())">Look up →</button>
+              <button class="btn btn-secondary" data-i18n="scanWithCamera" onclick="startBarcodeCamera()">Scan barcode</button>
+            </div>
+            <div class="product-search">
+              <input id="productSearchInput" placeholder="Search a food, dish, ingredient or brand" data-i18n-placeholder="productSearchPlaceholder">
+              <button class="btn btn-secondary" onclick="searchProduct($('productSearchInput').value.trim())" data-i18n="searchProduct">Search food</button>
+            </div>
+            <div style="margin-top:12px;display:flex;flex-wrap:wrap;justify-content:center;gap:6px;font-size:13px">
+              <span style="color:var(--muted)">Quick test barcodes:</span>
+              <button class="chip" style="padding:4px 10px;font-size:12px" onclick="lookupBarcode('8901058851419')">Maggi (8901058851419)</button>
+              <button class="chip" style="padding:4px 10px;font-size:12px" onclick="lookupBarcode('3017620422003')">Nutella (3017620422003)</button>
+              <button class="chip" style="padding:4px 10px;font-size:12px" onclick="lookupBarcode('5449000000996')">Diet Coke (5449000000996)</button>
+              <button class="chip" style="padding:4px 10px;font-size:12px" onclick="lookupBarcode('8901063141124')">NutriChoice (8901063141124)</button>
+            </div>
+            <video id="barcodeVideo" class="hidden" autoplay playsinline style="width:100%;border-radius:22px;margin-top:14px;max-height:320px;object-fit:cover"></video>
+            <div id="barcodeStatus" style="font-size:14px;color:var(--ink);margin-top:10px"></div>
+            <div class="source-note" data-i18n="sourceNote">Product matches are cross-checked against available public food data. If data is missing, KIACHE says so rather than guessing.</div>
+          </div>
+          <div id="barcodeResult" class="hidden"></div>
+        </div>
+
+        <div id="scanModePhoto" class="scanner hidden">
+          <div class="card" style="padding:14px;background:var(--green)">
+            <div class="scanner-frame" id="scannerFrame">
+              <video id="video" class="hidden" autoplay playsinline muted></video>
+              <div class="scan-qr-badge"><span class="qr-icon"></span><span data-i18n="scanNav">Scan</span></div>
+              <div class="scan-corner c1"></div><div class="scan-corner c2"></div><div class="scan-corner c3"></div><div class="scan-corner c4"></div>
+              <div class="scan-line"></div>
+              <div class="feedback" id="feedback">Steady…</div>
+              <div class="scan-hint" id="scanHint">Center the ingredients panel inside the frame.</div>
+            </div>
+            <div class="upload-row">
+              <button class="btn btn-primary" id="useCameraBtn" data-i18n="useCamera" onclick="startCamera()">Use camera</button>
+              <button class="btn btn-secondary" onclick="$('labelFile').click()" data-i18n="choosePhoto">Choose label photo</button>
+              <input id="labelFile" class="file" type="file" accept="image/*" onchange="handleImage(this.files[0])">
+              <button class="btn btn-ghost" data-i18n="demoLabel" onclick="demoScan()">Try demo</button>
+            </div>
+            <div id="cameraCaptureRow" class="upload-row hidden" style="margin-top:12px">
+              <button class="btn btn-primary" data-i18n="capturePhoto" onclick="capturePhoto()">Capture & read</button>
+              <button class="btn btn-ghost" data-i18n="cancelCamera" onclick="stopCamera()">Cancel</button>
+            </div>
+          </div>
+          <div id="result" class="hidden"></div>
+        </div>
+      </section>
+
+      <section id="page-history" class="page hidden">
+        <div class="top"><div><div class="eyebrow" data-i18n="historyEyebrow">KIACHE / HISTORY</div><h2 data-i18n="yourScans">Your scans.</h2></div><button class="btn btn-ghost" id="clearHistoryBtn" data-i18n="clearHistory" onclick="clearHistory()">Clear history</button></div>
+        <div id="historyList"></div>
+      </section>
+
+      <section id="page-settings" class="page hidden">
+        <div class="top"><div><div class="eyebrow" data-i18n="settingsEyebrow">KIACHE / SETTINGS</div><h2 data-i18n="makeKIACHE">Make KIACHE sound like you.</h2></div></div>
+        <div class="settings-grid">
+          <article class="card">
+            <h3 style="font-size:34px" data-i18n="yourExperience">Your experience</h3>
+            <div class="setting-row">
+              <label data-i18n="languageLabel">Language</label><small data-i18n="languageHelp">Change all app UI instantly.</small>
+              <select id="language" class="select" onchange="setLanguage(this.value)">
+                <option value="en">English</option><option value="hi">हिन्दी</option><option value="bn">বাংলা</option><option value="mr">मराठी</option>
+              </select>
+            </div>
+            <div class="setting-row">
+              <label data-i18n="yourNameLabel">Your name</label><small data-i18n="yourNameHelp">Add your name so KIACHE can personalize your experience.</small>
+              <input id="settingsName" class="text" placeholder="Your name">
+              <button class="btn btn-primary" style="margin-top:10px" data-i18n="saveName" onclick="saveName()">Save name</button>
+            </div>
+          </article>
+          <article class="card">
+            <h3 style="font-size:34px" data-i18n="dietPrefs">Dietary preferences</h3>
+            <div class="setting-row">
+              <label data-i18n="usefulPrefs">Choose what feels useful</label><small data-i18n="prefsHelp">KIACHE uses these preferences when explaining a label.</small>
+              <div class="chips" id="prefChips"></div>
+            </div>
+            <div class="setting-row">
+              <label data-i18n="allergenAlerts">Allergen alerts</label><small data-i18n="allergenHelp">Highlight ingredients you want KIACHE to watch for.</small>
+              <div class="chips" id="allergenChips"></div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section id="page-dictionary" class="page hidden">
+        <div class="top"><div><div class="eyebrow" data-i18n="dictionaryEyebrow">KIACHE / DICTIONARY</div><h2 data-i18n="dictionaryTitle">The ingredient dictionary.</h2></div></div>
+        <div class="card" style="padding:20px;margin-bottom:18px">
+          <p style="font-size:15px;color:var(--muted)" data-i18n="dictionaryDesc">Search by ingredient name, E-number or INS number (e.g. "E322", "INS 322", "lecithin", "sucralose").</p>
+          <div class="dict-search">
+            <input id="dictSearch" placeholder="Search an ingredient or E-number…" oninput="renderDictionary()">
+          </div>
+          <div class="dict-cat-row" id="dictCatRow"></div>
+        </div>
+        <div class="dict-list" id="dictList"></div>
+      </section>
+
+      <section id="page-compare" class="page hidden">
+        <div class="top"><div><div class="eyebrow" data-i18n="compareEyebrow">KIACHE / COMPARE</div><h2 data-i18n="compareTitle">Which one fits you better?</h2></div></div>
+        <p style="font-size:15px;color:var(--muted);margin-top:-8px" data-i18n="compareDesc">Enter two barcodes (or look one up in the scanner first, then come back) to see a side-by-side comparison.</p>
+        <div class="compare-inputs">
+          <div class="compare-input-card">
+            <label style="font-weight:700">Product A</label>
+            <input id="compareBarcodeA" inputmode="numeric" placeholder="Barcode for product A" value="8901063141124">
+          </div>
+          <div class="compare-input-card">
+            <label style="font-weight:700">Product B</label>
+            <input id="compareBarcodeB" inputmode="numeric" placeholder="Barcode for product B" value="3017620422003">
+          </div>
+        </div>
+        <div class="actions">
+          <button class="btn btn-primary" onclick="runCompare()">Compare →</button>
+          <div class="chips" id="comparePriorityChips" style="margin-left:10px"></div>
+        </div>
+        <div id="compareResult" style="margin-top:18px"></div>
+      </section>
+    </main>
+  </div>
+
+  <nav class="mobile-nav">
+    <button data-page="home" onclick="showPage('home')"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 11.5 12 4l8.5 7.5"/><path d="M5.5 10v9a1 1 0 0 0 1 1h4v-6h3v6h4a1 1 0 0 0 1-1v-9"/></svg></span><span data-i18n="home">Home</span></button>
+    <button data-page="scan" onclick="showPage('scan')"><span class="qr-icon" aria-hidden="true"></span><span data-i18n="scanNav">Scan</span></button>
+    <button data-page="history" onclick="showPage('history')"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v4h4"/><path d="M12 7.5v4.5l3 2"/></svg></span><span data-i18n="history">History</span></button>
+  </nav>
+
+  <button class="chat-toggle" onclick="toggleChat()" title="Ask KIACHE">?</button>
+  <div id="chat" class="chat hidden">
+    <div class="chat-head">Ask KIACHE <span style="font-size:12px;font-weight:600;opacity:.8">· rule-based food knowledge</span></div>
+    <div class="chat-body" id="chatBody"></div>
+    <form class="chat-form" onsubmit="return handleChatAsk(event)">
+      <input id="chatInput" placeholder="Ask about an ingredient, e.g. E322 or sucralose…" autocomplete="off">
+      <button class="btn btn-primary" type="submit" style="padding:11px 16px">Ask</button>
+    </form>
+    <div class="chat-foot">
+      <button class="chat-mode-btn active" id="chatModeEli5" onclick="setChatExplainMode('eli5')" type="button">Explain simply</button>
+      <button class="chat-mode-btn" id="chatModeSci" onclick="setChatExplainMode('scientist')" type="button">Explain like a scientist</button>
+      <button class="chat-clear-btn" onclick="renderGuidedAI()" type="button" title="Clear conversation">↺ Reset</button>
+    </div>
+  </div>
+</div>
+<div id="toast" class="toast"></div>
+
+<script>
+const facts=[
+  ["Your gut can help shape what you choose next","The gut–brain system sends signals involved in hunger, fullness and food-related responses. Food choices are influenced by far more than willpower alone."],
+  ["A label can list the same nutrient in disguise","Added sugars may appear under names such as dextrose, maltose, syrups or concentrates. KIACHE groups common terms so one ingredient name does not hide the bigger picture."],
+  ["A barcode is an identity key, not a health score","The same barcode can identify a product while its nutrition profile depends on the exact formulation and market. KIACHE shows the source and avoids turning a barcode into a medical verdict."],
+  ["NOVA and Nutri-Score answer different questions","Nutri-Score summarizes nutritional quality using a grading system, while NOVA describes the degree and purpose of food processing. One cannot be substituted for the other."],
+  ["Ingredient order is a useful clue","In many packaged-food labels, ingredients are listed in descending order by weight when added. That makes the first few ingredients especially useful when reading a label."],
+  ["Some foods naturally contain compounds that sound technical","Citric acid, pectin, lecithin and ascorbic acid can all occur naturally or be used in food processing. A scientific-sounding name is not, by itself, evidence that an ingredient is unsafe."],
+  ["'No added sugar' is not the same as sugar-free","A food can contain naturally occurring sugars even when no sugar has been added. The ingredient list and nutrition panel together give a clearer picture."],
+  ["Serving size changes the meaning of every number","A nutrition panel can look very different when a package contains several servings. Always compare the stated serving with the amount you actually plan to eat."],
+  ["Protein on the front does not tell the whole story","A product can be a meaningful source of protein and still contain substantial sodium, saturated fat or added sugar. Good label reading looks at the pattern, not one headline claim."],
+  ["'Whole grain' and 'multigrain' are not interchangeable","Multigrain only tells you that more than one grain is present. Whole-grain wording gives a different clue about whether the grain itself is whole."],
+  ["A product photo can be useful even when a barcode fails","Regional products, new launches and incomplete databases can produce missing barcode records. OCR can still extract the printed label, while KIACHE clearly marks what came from image recognition."],
+  ["Food labels are designed to be read in context","Nutrition numbers, ingredient order, serving size, allergens and processing descriptions each answer different questions. A single red-looking number should not be treated as a diagnosis."]
+];
+
+const i18n={
+ en:{
+  home:"Home",history:"Scan history",settings:"Settings",scan:"Scan a label",scanNav:"Scan",
+  modeBarcode:"Barcode / product",modePhoto:"Read label",barcodeIntro:"Use the camera for a barcode, type the barcode, or search by a product name or ingredient.",
+  barcodePlaceholder:"e.g. 8901058851419",lookUp:"Look up →",scanWithCamera:"Scan barcode",productSearchPlaceholder:"Search a food, dish, ingredient or brand",searchProduct:"Search food",
+  sourceNote:"Product matches are cross-checked against available public food data. If data is missing, KIACHE says so rather than guessing.",
+  homeGreetingTitle:"Know what's really in your food.",welcome:"Welcome to KIACHE",entryTitle:"Know what's really in your food.",
+  entryDesc:"Scan food labels, understand ingredients, and make sense of nutrition information without the noise.",
+  chooseLanguage:"Choose your language",getStarted:"Start with KIACHE →",
+  allergyOnboardingTitle:"Allergy preferences",allergyOnboardingHelp:"Select anything you want KIACHE to flag prominently.",
+  heroEyebrow:"Know what's really in your food.",heroTitle:"Scan. Decode. Decide.",
+  heroDesc:"KIACHE reads food labels, translates unfamiliar language, explains ingredients and nutrition, and helps you make informed choices without fear-based language.",
+  scanLabel:"Scan a label →",didYouKnow:"DID YOU KNOW?",tinyFact:"A food fact worth knowing.",
+  labelCheck:"LABEL CHECK",labelMore:"Your label has more to say.",labelDesc:"Use the camera or a clear label photo and KIACHE will extract what it can, then show where the information came from.",
+  openScanner:"Open scanner →",recentScans:"RECENT SCANS",savedLater:"Saved for later",
+  scannerEyebrow:"KIACHE / SCANNER",decodeTitle:"Let's decode it.",useCamera:"Use camera",capturePhoto:"Capture & read",cancelCamera:"Cancel",choosePhoto:"Choose label photo",demoLabel:"Try demo",
+  historyEyebrow:"KIACHE / HISTORY",yourScans:"Your scans.",clearHistory:"Clear history",settingsEyebrow:"KIACHE / SETTINGS",makeKIACHE:"Make KIACHE work for you.",
+  yourExperience:"Your experience",languageLabel:"Language",languageHelp:"Change the app language instantly.",yourNameLabel:"Your name",yourNameHelp:"Optional display name.",saveName:"Save name",
+  dietPrefs:"Dietary preferences",usefulPrefs:"Choose what feels useful",prefsHelp:"These preferences guide the way label information is highlighted.",
+  allergenAlerts:"Allergen alerts",allergenHelp:"Highlight ingredients you want KIACHE to watch for.",
+  askKIACHE:"Ask KIACHE",chatWelcome:"Choose a question below. KIACHE uses a curated, rule-based food knowledge library here — no external AI API and no open-ended guesses.",
+  aiQIngredients:"Do you want to know what a flagged ingredient does?",aiQNutrition:"Do you want to understand this product's nutrition?",aiQAllergens:"Do you want to check your allergy preferences against this product?",aiQProcessing:"Do you want to know what NOVA means here?",aiQScore:"Do you want to know what the Nutri-Score means?",aiQData:"Do you want to know how reliable this result is?",
+  yes:"Yes",no:"No",noContext:"Scan a product first and KIACHE can answer questions specifically about that result.",reliable:"Reliability first",
+  dictionaryNav:"Ingredient dictionary",compareNav:"Compare products",
+  quickInsight:"QUICK INSIGHT",kiacheSnapshot:"Your KIACHE snapshot",
+  dictionaryEyebrow:"KIACHE / DICTIONARY",dictionaryTitle:"The ingredient dictionary.",dictionaryDesc:"Search by ingredient name, E-number or INS number (e.g. \"E322\", \"INS 322\", \"lecithin\", \"sucralose\").",
+  compareEyebrow:"KIACHE / COMPARE",compareTitle:"Which one fits you better?",compareDesc:"Enter two barcodes (or look one up in the scanner first, then come back) to see a side-by-side comparison."
+ },
+ hi:{
+  home:"होम",history:"स्कैन इतिहास",settings:"सेटिंग्स",scan:"लेबल स्कैन करें",scanNav:"स्कैन",modeBarcode:"बारकोड / उत्पाद",modePhoto:"लेबल पढ़ें",
+  barcodeIntro:"बारकोड के लिए कैमरा इस्तेमाल करें, बारकोड टाइप करें या भोजन/सामग्री का नाम खोजें।",barcodePlaceholder:"उदा. 8901058851419",lookUp:"खोजें →",scanWithCamera:"बारकोड स्कैन करें",
+  productSearchPlaceholder:"भोजन, व्यंजन, सामग्री या ब्रांड खोजें",searchProduct:"भोजन खोजें",sourceNote:"उपलब्ध सार्वजनिक खाद्य डेटा से मिलान किया जाता है। डेटा न मिले तो KIACHE अनुमान नहीं लगाता।",
+  homeGreetingTitle:"जानें कि आपके खाने में वास्तव में क्या है।",welcome:"KIACHE में आपका स्वागत है",entryTitle:"जानें कि आपके खाने में वास्तव में क्या है।",entryDesc:"खाने के लेबल स्कैन करें, सामग्री समझें और पोषण जानकारी को सरल तरीके से पढ़ें।",
+  chooseLanguage:"अपनी भाषा चुनें",getStarted:"KIACHE शुरू करें →",allergyOnboardingTitle:"एलर्जी पसंद",allergyOnboardingHelp:"जिन चीज़ों पर KIACHE खास ध्यान दे, उन्हें चुनें।",
+  heroEyebrow:"जानें कि आपके खाने में वास्तव में क्या है।",heroTitle:"स्कैन करें। समझें। तय करें।",heroDesc:"KIACHE लेबल पढ़ता है, अनजान सामग्री समझाता है और बिना डर फैलाए जानकारी देता है।",scanLabel:"लेबल स्कैन करें →",
+  didYouKnow:"क्या आप जानते हैं?",tinyFact:"जानने लायक खाद्य तथ्य।",labelCheck:"लेबल जाँच",labelMore:"आपके लेबल में और भी जानकारी है।",labelDesc:"कैमरा या साफ़ लेबल फोटो इस्तेमाल करें। KIACHE बताएगा कि जानकारी कहाँ से आई है।",openScanner:"स्कैनर खोलें →",recentScans:"हाल के स्कैन",savedLater:"बाद के लिए सहेजे गए",
+  scannerEyebrow:"KIACHE / स्कैनर",decodeTitle:"आइए इसे समझते हैं।",useCamera:"कैमरा इस्तेमाल करें",capturePhoto:"कैप्चर और पढ़ें",cancelCamera:"रद्द करें",choosePhoto:"लेबल की फोटो चुनें",demoLabel:"डेमो",
+  historyEyebrow:"KIACHE / इतिहास",yourScans:"आपके स्कैन।",clearHistory:"इतिहास साफ़ करें",settingsEyebrow:"KIACHE / सेटिंग्स",makeKIACHE:"KIACHE को अपने अनुसार बनाएँ।",yourExperience:"आपका अनुभव",languageLabel:"भाषा",languageHelp:"ऐप की भाषा बदलें।",yourNameLabel:"आपका नाम",yourNameHelp:"वैकल्पिक नाम।",saveName:"नाम सहेजें",
+  dietPrefs:"आहार संबंधी पसंद",usefulPrefs:"जो उपयोगी लगे चुनें",prefsHelp:"इन पसंदों के अनुसार जानकारी हाइलाइट होगी।",allergenAlerts:"एलर्जन अलर्ट",allergenHelp:"जिन सामग्री पर नज़र रखनी है उन्हें चुनें।",askKIACHE:"KIACHE से पूछें",
+  chatWelcome:"नीचे से सवाल चुनें। यहाँ KIACHE एक curated, rule-based food knowledge library इस्तेमाल करता है — external AI API या खुले अनुमान नहीं।",aiQIngredients:"क्या आप जानना चाहते हैं कि चिन्हित सामग्री क्या करती है?",aiQNutrition:"क्या आप इस उत्पाद का पोषण समझना चाहते हैं?",aiQAllergens:"क्या आप एलर्जी पसंदों से मिलान करना चाहते हैं?",aiQProcessing:"क्या आप जानना चाहते हैं कि NOVA यहाँ क्या मतलब रखता है?",aiQScore:"क्या आप Nutri-Score समझना चाहते हैं?",aiQData:"क्या आप जानना चाहते हैं कि यह परिणाम कितना विश्वसनीय है?",yes:"हाँ",no:"नहीं",noContext:"पहले कोई उत्पाद स्कैन करें, फिर KIACHE उसी परिणाम के बारे में बताएगा।",reliable:"विश्वसनीयता पहले",
+  dictionaryNav:"सामग्री शब्दकोश",compareNav:"उत्पाद तुलना करें",
+  quickInsight:"त्वरित जानकारी",kiacheSnapshot:"आपकी KIACHE झलक",
+  dictionaryEyebrow:"KIACHE / शब्दकोश",dictionaryTitle:"सामग्री शब्दकोश।",dictionaryDesc:"सामग्री का नाम, E-नंबर या INS नंबर खोजें (जैसे \"E322\", \"INS 322\", \"lecithin\", \"sucralose\")।",
+  compareEyebrow:"KIACHE / तुलना",compareTitle:"आपके लिए कौन बेहतर है?",compareDesc:"दो बारकोड दर्ज करें (या पहले स्कैनर में एक देखें, फिर यहाँ लौटें) साथ-साथ तुलना देखने के लिए।"
+ },
+ bn:{},mr:{}
+};
+i18n.bn={...i18n.en,
+ home:"হোম",history:"স্ক্যান ইতিহাস",settings:"সেটিংস",scan:"লেবেল স্ক্যান করুন",scanNav:"স্ক্যান",
+ modeBarcode:"বারকোড / পণ্য",modePhoto:"লেবেল পড়ুন",barcodeIntro:"বারকোডের জন্য ক্যামেরা ব্যবহার করুন, বারকোড টাইপ করুন, বা পণ্যের নাম বা উপাদান দিয়ে খুঁজুন।",
+ barcodePlaceholder:"যেমন 8901058851419",lookUp:"খুঁজুন →",scanWithCamera:"বারকোড স্ক্যান করুন",productSearchPlaceholder:"খাবার, পদ, উপাদান বা ব্র্যান্ড খুঁজুন",searchProduct:"খাবার খুঁজুন",
+ sourceNote:"পাওয়া যায় এমন সর্বজনীন খাদ্য তথ্যের সাথে মিলিয়ে দেখা হয়। তথ্য না থাকলে KIACHE অনুমান করে না।",
+ homeGreetingTitle:"জানুন আপনার খাবারে আসলে কী আছে।",welcome:"KIACHE-তে স্বাগতম",entryTitle:"জানুন আপনার খাবারে আসলে কী আছে।",entryDesc:"খাবারের লেবেল স্ক্যান করুন, উপাদান বুঝুন, এবং পুষ্টির তথ্য সহজভাবে জানুন।",
+ chooseLanguage:"আপনার ভাষা বেছে নিন",getStarted:"KIACHE শুরু করুন →",allergyOnboardingTitle:"অ্যালার্জি পছন্দ",allergyOnboardingHelp:"যেগুলোর দিকে KIACHE বিশেষভাবে নজর দেবে সেগুলি বেছে নিন।",
+ heroEyebrow:"জানুন আপনার খাবারে আসলে কী আছে।",heroTitle:"স্ক্যান করুন। বুঝুন। সিদ্ধান্ত নিন।",heroDesc:"KIACHE লেবেল পড়ে, অচেনা উপাদান ব্যাখ্যা করে এবং ভয় ছড়ানো ছাড়াই তথ্য দেয়।",scanLabel:"লেবেল স্ক্যান করুন →",
+ didYouKnow:"আপনি কি জানেন?",tinyFact:"জানার মতো একটি খাদ্য তথ্য।",labelMore:"আপনার লেবেলে আরও অনেক কিছু বলার আছে।",labelDesc:"ক্যামেরা বা একটি স্পষ্ট লেবেলের ছবি দিন, KIACHE তা বুঝিয়ে দেবে।",openScanner:"স্ক্যানার খুলুন →",recentScans:"সাম্প্রতিক স্ক্যান",savedLater:"পরে দেখার জন্য সংরক্ষিত",
+ scannerEyebrow:"KIACHE / স্ক্যানার",decodeTitle:"চলুন এটি বুঝি।",useCamera:"ক্যামেরা ব্যবহার করুন",capturePhoto:"ক্যাপচার ও পড়ুন",cancelCamera:"বাতিল করুন",choosePhoto:"লেবেলের ছবি বেছে নিন",demoLabel:"ডেমো দেখুন",
+ historyEyebrow:"KIACHE / ইতিহাস",yourScans:"আপনার স্ক্যান।",clearHistory:"ইতিহাস মুছুন",settingsEyebrow:"KIACHE / সেটিংস",makeKIACHE:"KIACHE-কে আপনার মতো করুন।",
+ yourExperience:"আপনার অভিজ্ঞতা",languageLabel:"ভাষা",languageHelp:"অ্যাপের ভাষা সাথে সাথে পরিবর্তন করুন।",yourNameLabel:"আপনার নাম",yourNameHelp:"ঐচ্ছিক প্রদর্শন নাম।",saveName:"নাম সংরক্ষণ করুন",
+ dietPrefs:"খাদ্যাভ্যাসের পছন্দ",usefulPrefs:"যা উপযোগী মনে হয় তা বেছে নিন",prefsHelp:"এই পছন্দগুলি লেবেলের তথ্য হাইলাইট করার ধরন ঠিক করে।",allergenAlerts:"অ্যালার্জেন সতর্কতা",allergenHelp:"যে উপাদানগুলিতে KIACHE নজর রাখুক তা বেছে নিন।",
+ askKIACHE:"KIACHE-কে জিজ্ঞাসা করুন",chatWelcome:"নিচে থেকে একটি প্রশ্ন বেছে নিন। এখানে KIACHE একটি নিয়ম-ভিত্তিক জ্ঞান-ভাণ্ডার ব্যবহার করে — কোনো external AI API বা মুক্ত অনুমান নেই।",
+ aiQIngredients:"চিহ্নিত উপাদানটি কী করে জানতে চান?",aiQNutrition:"এই পণ্যের পুষ্টি বুঝতে চান?",aiQAllergens:"আপনার অ্যালার্জি পছন্দের সাথে মিলিয়ে দেখতে চান?",aiQProcessing:"NOVA-এর মানে জানতে চান?",aiQScore:"Nutri-Score-এর মানে জানতে চান?",aiQData:"এই ফলাফলটি কতটা নির্ভরযোগ্য জানতে চান?",
+ yes:"হ্যাঁ",no:"না",noContext:"প্রথমে একটি পণ্য স্ক্যান করুন, তারপর KIACHE সেই ফলাফল সম্পর্কে বলতে পারবে।",reliable:"নির্ভরযোগ্যতা প্রথমে",
+ dictionaryNav:"উপাদান অভিধান",compareNav:"পণ্য তুলনা করুন",
+ quickInsight:"দ্রুত পর্যালোচনা",kiacheSnapshot:"আপনার KIACHE সারাংশ",
+ dictionaryEyebrow:"KIACHE / অভিধান",dictionaryTitle:"উপাদান অভিধান।",dictionaryDesc:"উপাদানের নাম, E-নম্বর বা INS নম্বর দিয়ে খুঁজুন (যেমন \"E322\", \"INS 322\", \"lecithin\", \"sucralose\")।",
+ compareEyebrow:"KIACHE / তুলনা",compareTitle:"কোনটি আপনার জন্য ভালো?",compareDesc:"পাশাপাশি তুলনা দেখতে দুটি বারকোড লিখুন (অথবা আগে স্ক্যানারে একটি দেখে নিন, তারপর এখানে ফিরে আসুন)।"
+};
+i18n.mr={...i18n.en,
+ home:"होम",history:"स्कॅन इतिहास",settings:"सेटिंग्ज",scan:"लेबल स्कॅन करा",scanNav:"स्कॅन",
+ modeBarcode:"बारकोड / उत्पादन",modePhoto:"लेबल वाचा",barcodeIntro:"बारकोडसाठी कॅमेरा वापरा, बारकोड टाइप करा किंवा उत्पादनाचे नाव किंवा घटक शोधा.",
+ barcodePlaceholder:"उदा. 8901058851419",lookUp:"शोधा →",scanWithCamera:"बारकोड स्कॅन करा",productSearchPlaceholder:"अन्न, पदार्थ, घटक किंवा ब्रँड शोधा",searchProduct:"अन्न शोधा",
+ sourceNote:"उपलब्ध सार्वजनिक अन्न डेटाशी जुळवले जाते. डेटा नसल्यास KIACHE अंदाज लावत नाही.",
+ homeGreetingTitle:"तुमच्या अन्नात खरंच काय आहे ते जाणून घ्या.",welcome:"KIACHE मध्ये स्वागत आहे",entryTitle:"तुमच्या अन्नात खरंच काय आहे ते जाणून घ्या.",entryDesc:"अन्नाची लेबले स्कॅन करा, घटक समजून घ्या आणि पोषण माहिती सोप्या पद्धतीने वाचा.",
+ chooseLanguage:"तुमची भाषा निवडा",getStarted:"KIACHE सुरू करा →",allergyOnboardingTitle:"अ‍ॅलर्जी पसंती",allergyOnboardingHelp:"KIACHE ने ठळकपणे पाहावे असे घटक निवडा.",
+ heroEyebrow:"तुमच्या अन्नात खरंच काय आहे ते जाणून घ्या.",heroTitle:"स्कॅन करा. समजून घ्या. ठरवा.",heroDesc:"KIACHE लेबल वाचते, अनोळखी घटक समजावते आणि भीती न पसरवता माहिती देते.",scanLabel:"लेबल स्कॅन करा →",
+ didYouKnow:"तुम्हाला माहीत आहे का?",tinyFact:"जाणून घेण्यासारखी एक अन्न माहिती.",labelMore:"तुमच्या लेबलमध्ये आणखी बरंच काही आहे.",labelDesc:"कॅमेरा किंवा स्पष्ट लेबल फोटो द्या, KIACHE ते समजावून सांगेल.",openScanner:"स्कॅनर उघडा →",recentScans:"अलीकडील स्कॅन",savedLater:"नंतरसाठी जतन केलेले",
+ scannerEyebrow:"KIACHE / स्कॅनर",decodeTitle:"चला हे समजून घेऊया.",useCamera:"कॅमेरा वापरा",capturePhoto:"कॅप्चर करा आणि वाचा",cancelCamera:"रद्द करा",choosePhoto:"लेबल फोटो निवडा",demoLabel:"डेमो पहा",
+ historyEyebrow:"KIACHE / इतिहास",yourScans:"तुमचे स्कॅन.",clearHistory:"इतिहास साफ करा",settingsEyebrow:"KIACHE / सेटिंग्ज",makeKIACHE:"KIACHE ला तुमच्यासारखे बनवा.",
+ yourExperience:"तुमचा अनुभव",languageLabel:"भाषा",languageHelp:"अ‍ॅपची भाषा त्वरित बदला.",yourNameLabel:"तुमचे नाव",yourNameHelp:"ऐच्छिक प्रदर्शन नाव.",saveName:"नाव जतन करा",
+ dietPrefs:"आहार प्राधान्ये",usefulPrefs:"उपयुक्त वाटेल ते निवडा",prefsHelp:"ही प्राधान्ये लेबल माहिती कशी ठळक करावी हे ठरवतात.",allergenAlerts:"अ‍ॅलर्जन सूचना",allergenHelp:"KIACHE ने लक्ष ठेवावे असे घटक निवडा.",
+ askKIACHE:"KIACHE ला विचारा",chatWelcome:"खालून एक प्रश्न निवडा. येथे KIACHE एक नियम-आधारित माहिती संच वापरते — कोणतेही बाह्य AI API किंवा मुक्त अंदाज नाहीत.",
+ aiQIngredients:"चिन्हांकित घटक काय करतो हे जाणून घ्यायचे आहे का?",aiQNutrition:"या उत्पादनाचे पोषण समजून घ्यायचे आहे का?",aiQAllergens:"तुमच्या अ‍ॅलर्जी प्राधान्यांशी जुळते का ते पाहायचे आहे का?",aiQProcessing:"NOVA म्हणजे काय हे जाणून घ्यायचे आहे का?",aiQScore:"Nutri-Score म्हणजे काय हे जाणून घ्यायचे आहे का?",aiQData:"हा निकाल किती विश्वासार्ह आहे हे जाणून घ्यायचे आहे का?",
+ yes:"होय",no:"नाही",noContext:"आधी एखादे उत्पादन स्कॅन करा, मग KIACHE त्या निकालाबद्दल सांगू शकेल.",reliable:"विश्वासार्हता आधी",
+ dictionaryNav:"घटक शब्दकोश",compareNav:"उत्पादनांची तुलना करा",
+ quickInsight:"त्वरित माहिती",kiacheSnapshot:"तुमचा KIACHE आढावा",
+ dictionaryEyebrow:"KIACHE / शब्दकोश",dictionaryTitle:"घटक शब्दकोश.",dictionaryDesc:"घटकाचे नाव, E-नंबर किंवा INS नंबरने शोधा (उदा. \"E322\", \"INS 322\", \"lecithin\", \"sucralose\").",
+ compareEyebrow:"KIACHE / तुलना",compareTitle:"तुमच्यासाठी कोणते चांगले आहे?",compareDesc:"बाजूबाजूला तुलना पाहण्यासाठी दोन बारकोड टाका (किंवा आधी स्कॅनरमध्ये एक पाहा, मग इथे परत या)."
+};
+
+const allergenOptions=["Peanuts","Tree nuts","Milk","Egg","Soy","Wheat / gluten","Sesame","Fish","Shellfish"];
+const prefs=["Lower sugar","Simple ingredients","Plant-forward","More protein"];
+
+const ingredientKnowledge={
+ sugar:{label:"Added sugars",category:"Sweetener",why:"Adds sweetness and energy. Several sugar names can appear separately on a label.",watch:"Compare total sugars, added-sugar information when available, and serving size.",eli5:"This is a form of sugar that makes food taste sweet and gives quick energy.",scientist:"A simple or disaccharide carbohydrate (e.g. sucrose, dextrose) added during formulation to modulate sweetness, texture, browning and preservation."},
+ salt:{label:"Salt / sodium",category:"Other",why:"Used for flavour and preservation. Sodium is an essential nutrient, but too much can be a concern for some people.",watch:"Look at sodium per serving and consider the portion you actually eat."},
+ palm:{label:"Palm oil",category:"Oils and fats",why:"A common plant fat used for texture and stability. Its presence alone does not establish that a food is unsafe.",watch:"Consider the overall saturated-fat amount and the rest of the product."},
+ hydrogenated:{label:"Hydrogenated oil",category:"Oils and fats",why:"Hydrogenation can change the properties of an oil. Fully and partially hydrogenated oils are not identical, so the exact label wording matters.",watch:"Check the nutrition panel and the exact ingredient wording."},
+ maltodextrin:{label:"Maltodextrin",category:"Starches",eNumber:"",why:"A starch-derived carbohydrate commonly used for texture, bulk or processing.",watch:"It can contribute carbohydrate without tasting very sweet.",eli5:"A powder made from starch that adds body to food without much sweetness.",scientist:"A glucose polymer (DE 3–20) produced by partial hydrolysis of starch, used as a bulking agent, carrier or texturiser."},
+ lecithin:{label:"Lecithin",category:"Emulsifiers",eNumber:"E322",insNumber:"322",why:"An emulsifier that helps ingredients such as water and oil stay mixed. It can come from sources including soy or sunflower.",watch:"If allergies matter, check the source listed on the package.",eli5:"It's what keeps oil and water from separating in your food, like in chocolate or bread.",scientist:"A phospholipid-rich mixture that acts as a surfactant, reducing interfacial tension between hydrophilic and lipophilic phases."},
+ citric:{label:"Citric acid",category:"Acidity regulators",eNumber:"E330",insNumber:"330",why:"An acidulant used for tartness, acidity control and preservation. It is also naturally present in many fruits.",watch:"The name alone does not indicate that the product is harmful.",eli5:"It's the sour, tangy ingredient also found naturally in lemons and oranges.",scientist:"A tricarboxylic acid used to adjust pH, chelate metal ions and act as a mild preservative and flavour enhancer."},
+ ascorbic:{label:"Ascorbic acid",category:"Antioxidants",eNumber:"E300",insNumber:"300",why:"Vitamin C in a form often used for fortification or to limit oxidation.",watch:"It is a familiar food ingredient; the amount and purpose matter.",eli5:"This is vitamin C — it keeps food fresh and can also add nutrition.",scientist:"An antioxidant that scavenges reactive oxygen species and retards oxidative browning and rancidity."},
+ inulin:{label:"Inulin / chicory fibre",category:"Fibres",why:"A fermentable dietary fibre used in some foods to increase fibre content or improve texture.",watch:"Some people find large amounts cause digestive discomfort."},
+ gums:{label:"Food gums",category:"Thickeners",why:"Ingredients such as xanthan or guar gum can thicken or stabilize foods.",watch:"They are used in small amounts; individual tolerance can vary."},
+ colour:{label:"Added colour",category:"Colours",why:"Food colours are used to make or restore a consistent appearance.",watch:"The specific colour and local regulations matter more than the generic word 'colour'."},
+ sucralose:{label:"Sucralose",category:"Sweetener",eNumber:"E955",insNumber:"955",why:"A non-nutritive sweetener made from sugar, used to provide sweetness with little to no calories or conventional sugar.",watch:"Check the amount and how many different sweeteners are combined in one product.",eli5:"It tastes very sweet but has almost no calories, so it's often used instead of sugar.",scientist:"A chlorinated sucrose derivative that is roughly 600× sweeter than sucrose and largely resistant to metabolism."},
+ aspartame:{label:"Aspartame",category:"Sweetener",eNumber:"E951",insNumber:"951",why:"A widely used non-nutritive sweetener. People with the rare condition phenylketonuria (PKU) need to avoid phenylalanine, so labels often carry a specific warning.",watch:"Look for a phenylalanine warning if this applies to you.",eli5:"A very sweet ingredient used in tiny amounts instead of sugar.",scientist:"A dipeptide methyl ester (aspartyl-phenylalanine methyl ester), ~200× sweeter than sucrose, metabolised into phenylalanine, aspartic acid and methanol at low levels."},
+ acesulfameK:{label:"Acesulfame potassium (Ace-K)",category:"Sweetener",eNumber:"E950",insNumber:"950",why:"A non-nutritive sweetener often combined with other sweeteners to balance taste.",watch:"Frequently appears alongside sucralose or aspartame in 'zero sugar' products.",eli5:"A sugar-free sweetener that's often mixed with others to make the taste more balanced.",scientist:"A potassium salt of an oxathiazinone dioxide, heat-stable and commonly blended synergistically with other high-intensity sweeteners."},
+ saccharin:{label:"Saccharin",category:"Sweetener",eNumber:"E954",insNumber:"954",why:"One of the oldest artificial sweeteners, used in small amounts for sweetness without sugar.",watch:"Can have a noticeable aftertaste at higher concentrations.",eli5:"An old-school sugar substitute that's very sweet in tiny amounts."},
+ steviolGlycosides:{label:"Steviol glycosides (stevia)",category:"Sweetener",eNumber:"E960",insNumber:"960",why:"A plant-derived sweetener extracted from the stevia leaf.",watch:"Often blended with sugar alcohols to soften its aftertaste.",eli5:"A sweetener made from a plant called stevia instead of a lab-made chemical.",scientist:"A group of diterpene glycosides extracted from Stevia rebaudiana leaves, non-caloric and heat-stable."},
+ erythritol:{label:"Erythritol",category:"Sweetener (sugar alcohol)",eNumber:"E968",insNumber:"968",why:"A sugar alcohol that provides sweetness with minimal calories; largely absorbed and excreted unchanged.",watch:"Generally well tolerated, though very large amounts can affect some people's digestion.",eli5:"A sugar-like ingredient your body mostly doesn't absorb, so it adds little energy."},
+ xylitol:{label:"Xylitol",category:"Sweetener (sugar alcohol)",eNumber:"E967",insNumber:"967",why:"A sugar alcohol common in sugar-free gum and mints.",watch:"Large amounts can have a laxative effect in some people. It is toxic to dogs — keep such products away from pets."},
+ sorbitol:{label:"Sorbitol",category:"Sweetener (sugar alcohol)",eNumber:"E420",insNumber:"420",why:"A sugar alcohol used for sweetness and to retain moisture.",watch:"Consuming a lot at once can cause digestive discomfort in some people."},
+ maltitol:{label:"Maltitol",category:"Sweetener (sugar alcohol)",eNumber:"E965",insNumber:"965",why:"A sugar alcohol commonly used in sugar-free chocolate and confectionery.",watch:"Can have a laxative effect in larger amounts."},
+ monkFruit:{label:"Monk fruit extract",category:"Sweetener",why:"A non-caloric sweetener derived from the monk fruit (luo han guo).",watch:"Often blended with other sweeteners; check the full ingredient list."},
+ msg:{label:"Monosodium glutamate (MSG)",category:"Flavour enhancer",eNumber:"E621",insNumber:"621",why:"A flavour enhancer that amplifies savoury (umami) taste. It is the sodium salt of glutamic acid, an amino acid found naturally in many foods like tomatoes and cheese.",watch:"Major food-safety authorities including FSSAI and WHO/FAO's JECFA consider MSG safe for the general population at normal use levels; some people report individual sensitivity.",eli5:"It's an ingredient that makes savoury food taste richer — the same kind of taste-building block found naturally in cheese and tomatoes.",scientist:"The sodium salt of L-glutamic acid; glutamate receptors on the tongue mediate umami taste perception."},
+ sodiumBenzoate:{label:"Sodium benzoate",category:"Preservatives",eNumber:"E211",insNumber:"211",why:"A preservative used to prevent the growth of mould, yeast and some bacteria, mainly in acidic foods and drinks.",watch:"Regulated maximum usage levels apply; the amount matters more than the presence alone."},
+ potassiumSorbate:{label:"Potassium sorbate",category:"Preservatives",eNumber:"E202",insNumber:"202",why:"A widely used preservative that inhibits mould and yeast growth, extending shelf life.",watch:"Considered one of the milder, well-studied preservatives."},
+ bakingSoda:{label:"Sodium bicarbonate (baking soda)",category:"Raising agents",eNumber:"E500",insNumber:"500",why:"A raising agent that releases carbon dioxide to help baked goods rise.",watch:"Contributes some sodium to the final product."},
+ tartrazine:{label:"Tartrazine",category:"Colours",eNumber:"E102",insNumber:"102",why:"A synthetic yellow food colour.",watch:"A small number of people report sensitivity; regulated usage limits apply in most markets."}
+};
+const dictionaryCategories=["All","Sweetener","Sweetener (sugar alcohol)","Preservatives","Emulsifiers","Acidity regulators","Antioxidants","Colours","Thickeners","Fibres","Starches","Flavour enhancer","Raising agents","Oils and fats","Other"];
+let dictCategoryFilter="All";
+function normalizeSearchTerm(s){return (s||"").toLowerCase().trim().replace(/^ins\s*/,"").replace(/^e[\s\-]?/,"")}
+function ingredientMatchesQuery(key,entry,q){
+ if(!q)return true;
+ const nq=normalizeSearchTerm(q), rawQ=q.toLowerCase().trim();
+ const fields=[key,entry.label,entry.eNumber||"",entry.insNumber||"",entry.category||""].join(" ").toLowerCase();
+ if(fields.includes(rawQ))return true;
+ if(entry.eNumber&&normalizeSearchTerm(entry.eNumber)===nq)return true;
+ if(entry.insNumber&&entry.insNumber===nq)return true;
+ return false;
+}
+function renderDictionary(){
+ const catRow=$("dictCatRow");if(catRow)catRow.innerHTML=dictionaryCategories.map(c=>`<button class="chip ${dictCategoryFilter===c?"active":""}" onclick="dictCategoryFilter='${c.replace(/'/g,"\\'")}';renderDictionary()">${escapeHtml(c)}</button>`).join("");
+ const q=$("dictSearch")?.value||"";
+ const entries=Object.entries(ingredientKnowledge).filter(([k,v])=>(dictCategoryFilter==="All"||v.category===dictCategoryFilter)&&ingredientMatchesQuery(k,v,q));
+ const list=$("dictList");if(!list)return;
+ if(!entries.length){list.innerHTML=`<div class="recent-empty" style="grid-column:1/-1">No ingredient matched that search. Try just the number (e.g. "621") or a plain name.</div>`;return}
+ list.innerHTML=entries.map(([k,v])=>`<article class="dict-card">
+   <div class="dict-meta">${escapeHtml(v.category||"Ingredient")}${v.eNumber?` · ${escapeHtml(v.eNumber)}`:""}${v.insNumber?` · INS ${escapeHtml(v.insNumber)}`:""}</div>
+   <h4>${escapeHtml(v.label)}</h4>
+   <div class="dict-label">KIACHE explanation</div><p>${escapeHtml(v.eli5||v.why)}</p>
+   <div class="dict-label">Why it's used</div><p>${escapeHtml(v.why)}</p>
+   ${v.watch?`<div class="dict-label">Worth knowing</div><p>${escapeHtml(v.watch)}</p>`:""}
+   ${v.scientist?`<div class="dict-label">Science</div><p>${escapeHtml(v.scientist)}</p>`:""}
+ </article>`).join("");
+}
+
+const safeStorage = {
+  get(k, fallback = "") {
+    try { return localStorage.getItem(k) ?? fallback; } catch (e) { return fallback; }
+  },
+  set(k, v) {
+    try { localStorage.setItem(k, v); } catch (e) {}
+  },
+  getJSON(k, fallback) {
+    try {
+      const val = localStorage.getItem(k);
+      return val ? JSON.parse(val) : fallback;
+    } catch (e) {
+      return fallback;
+    }
+  }
+};
+
+let state={
+ lang: safeStorage.get("kiacheLang", "en") || "en",
+ name: safeStorage.get("kiacheName", ""),
+ prefs: safeStorage.getJSON("kiachePrefs", ["Simple ingredients"]),
+ allergens: safeStorage.getJSON("kiacheAllergens", ["Peanuts"]),
+ history: safeStorage.getJSON("kiacheHistory", [])
+};
+let cameraStream=null, barcodeStream=null, barcodeDetectionLoop=null;
+
+function $(id){return document.getElementById(id)}
+function save(){
+ safeStorage.set("kiacheLang", state.lang);
+ safeStorage.set("kiacheName", state.name);
+ safeStorage.set("kiachePrefs", JSON.stringify(state.prefs));
+ safeStorage.set("kiacheAllergens", JSON.stringify(state.allergens));
+ safeStorage.set("kiacheHistory", JSON.stringify(state.history));
+}
+function t(k){return (i18n[state.lang]&&i18n[state.lang][k])||i18n.en[k]||k}
+function escapeHtml(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
+function toast(msg){const x=$("toast");if(!x)return;x.textContent=msg;x.classList.add("show");clearTimeout(window.__toast);window.__toast=setTimeout(()=>x.classList.remove("show"),2400)}
+
+const langLabels = { en: "English", hi: "हिन्दी", bn: "বাংলা", mr: "मराठी" };
+
+function init(){
+ renderEntryLang();renderEntryAllergies();renderFacts();renderSettings();renderHistory();renderHome();applyTranslations();renderGuidedAI();renderDictionary();renderComparePriorityChips();
+ if($("language"))$("language").value=state.lang;
+ if($("settingsName"))$("settingsName").value=state.name;
+ if($("entryMascotSlot"))$("entryMascotSlot").innerHTML=mascotHTML();
+ if(safeStorage.get("kiacheEntered")==="1")enterApp(true);
+}
+function renderEntryLang(){
+ const el=$("entryLang");if(!el)return;
+ el.innerHTML=["en","hi","bn","mr"].map(l=>`<button class="lang ${state.lang===l?"active":""}" onclick="setLanguage('${l}')">${langLabels[l]||l}</button>`).join("");
+}
+function renderEntryAllergies(){
+ const el=$("entryAllergyChips");if(!el)return;
+ el.innerHTML=allergenOptions.map(x=>`<button class="chip ${state.allergens.includes(x)?"active":""}" onclick="toggleAllergen('${x.replace(/'/g,"\\'")}');renderEntryAllergies()">${escapeHtml(x)}</button>`).join("");
+}
+function applyTranslations(){
+ const tr=i18n[state.lang]||i18n.en;
+ document.querySelectorAll("[data-i18n]").forEach(el=>{if(tr[el.dataset.i18n])el.textContent=tr[el.dataset.i18n]});
+ document.querySelectorAll("[data-i18n-placeholder]").forEach(el=>{if(tr[el.dataset.i18nPlaceholder])el.placeholder=tr[el.dataset.i18nPlaceholder]});
+ if($("language"))$("language").value=state.lang;
+ renderEntryLang();renderEntryAllergies();
+}
+function setLanguage(l){state.lang=l;save();applyTranslations();renderAll();toast(l==="en"?"Language changed":"Language updated")}
+function enterApp(){
+ safeStorage.set("kiacheEntered","1");
+ if($("entry"))$("entry").classList.add("hidden");
+ if($("app"))$("app").classList.remove("hidden");
+ renderAll();
+ showPage("home");
+}
+function renderAll(){renderHome();renderHistory();renderSettings();renderFacts();renderGuidedAI();renderDictionary();renderComparePriorityChips()}
+function renderFacts(){const f=facts[Math.floor(Date.now()/86400000)%facts.length];$("factTitle").textContent=f[0];$("factText").textContent=f[1]}
+function renderHome(){
+ $("sideName").textContent=state.name||"Guest";$("avatar").textContent=(state.name||"G").slice(0,1).toUpperCase();
+ const recent=state.history.slice(0,3);
+ $("homeRecent").innerHTML=recent.length?recent.map((x,i)=>`<button class="recent-scan" onclick="openHistoryItem(${i})"><b>${escapeHtml(x.name)}</b><br><small>${escapeHtml(x.date)}</small></button>`).join(""):`<div class="recent-empty">Your scans will appear here.<br><small>Scan a food label to start building your history.</small></div>`;
+ renderHomeInsight();
+}
+function renderHomeInsight(){
+ const el=$("homeInsight");if(!el)return;
+ const total=state.history.length;
+ if(!total){el.innerHTML=`<div class="recent-empty">Scan a few products and KIACHE will summarise patterns here.</div>`;return}
+ const sweetTerms=sweetenerKeys.map(k=>ingredientKnowledge[k].label.toLowerCase().split(" ")[0]);
+ const textOf=x=>(x.rawText||x.product?.ingredients_text||"").toLowerCase();
+ const withSweeteners=state.history.filter(x=>sweetTerms.some(t=>textOf(x).includes(t))).length;
+ const allergyMatches=state.history.filter(x=>(x.score||"").includes("Allergy")).length;
+ const favourites=state.history.filter(x=>x.favorite).length;
+ el.innerHTML=`<div class="insight-stat" style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #DED6C9"><span>Products scanned</span><b>${total}</b></div>
+  <div class="insight-stat" style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #DED6C9"><span>Contained alternative sweeteners</span><b>${withSweeteners}</b></div>
+  <div class="insight-stat" style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #DED6C9"><span>Matched an allergy preference</span><b>${allergyMatches}</b></div>
+  <div class="insight-stat" style="display:flex;justify-content:space-between;padding:8px 0"><span>Saved to favourites</span><b>${favourites}</b></div>`;
+}
+function renderSettings(){
+ $("prefChips").innerHTML=prefs.map(x=>`<button class="chip ${state.prefs.includes(x)?"active":""}" onclick="togglePref('${x}')">${x}</button>`).join("");
+ $("allergenChips").innerHTML=allergenOptions.map(x=>`<button class="chip ${state.allergens.includes(x)?"active":""}" onclick="toggleAllergen('${x}')">${x}</button>`).join("");
+}
+function togglePref(x){state.prefs=state.prefs.includes(x)?state.prefs.filter(a=>a!==x):[...state.prefs,x];save();renderSettings()}
+function toggleAllergen(x){state.allergens=state.allergens.includes(x)?state.allergens.filter(a=>a!==x):[...state.allergens,x];save();renderSettings()}
+function saveName(){state.name=$("settingsName").value.trim();save();renderHome();toast("Name saved")}
+function showPage(p){
+ document.querySelectorAll(".page").forEach(x=>x.classList.add("hidden"));
+ const target=$("page-"+p);if(!target)return;target.classList.remove("hidden");target.classList.remove("page-enter");void target.offsetWidth;target.classList.add("page-enter");
+ document.querySelectorAll("[data-page]").forEach(b=>b.classList.toggle("active",b.dataset.page===p));window.scrollTo({top:0,behavior:"smooth"});
+ if(p==="history")renderHistory();if(p!=="scan"){stopCamera();stopBarcodeCamera()}
+}
+let historyFavOnly=false;
+function toggleFavHistoryItem(i,ev){ev.stopPropagation();state.history[i].favorite=!state.history[i].favorite;save();renderHistory();renderHome();toast(state.history[i].favorite?"Saved to favourites":"Removed from favourites")}
+function renderHistory(){
+ $("clearHistoryBtn").style.display=state.history.length?"":"none";
+ if(!state.history.length){$("historyList").innerHTML=`<div class="card recent-empty">${mascotHTML()}<h3 style="font-size:33px">Nothing here yet.</h3><p>Scan your first food label and your saved reads will appear here.</p><button class="btn btn-primary" onclick="showPage('scan')">Scan a label →</button></div>`;return}
+ const filterBtn=`<div class="chips" style="margin-bottom:14px;justify-content:center"><button class="chip ${!historyFavOnly?"active":""}" onclick="historyFavOnly=false;renderHistory()">All scans</button><button class="chip ${historyFavOnly?"active":""}" onclick="historyFavOnly=true;renderHistory()">★ Favourites</button></div>`;
+ const items=state.history.map((x,i)=>({x,i})).filter(({x})=>!historyFavOnly||x.favorite);
+ if(!items.length){$("historyList").innerHTML=filterBtn+`<div class="recent-empty">No favourites saved yet.</div>`;return}
+ $("historyList").innerHTML=filterBtn+`<div class="history-list">${items.map(({x,i})=>`<div class="history-item"><div><strong>${escapeHtml(x.name)}</strong>${x.favorite?" ★":""}<br><small>${escapeHtml(x.date)}</small></div><div style="display:flex;align-items:center;gap:10px"><span class="pill">${escapeHtml(x.score||"Read")}</span><button class="history-delete" title="${x.favorite?"Unsave":"Save"}" aria-label="Toggle favourite" onclick="toggleFavHistoryItem(${i},event)">${x.favorite?"★":"☆"}</button><button class="history-delete" title="Delete this scan" aria-label="Delete this scan" onclick="event.stopPropagation();deleteHistoryItem(${i})">✕</button></div><button class="btn btn-ghost" onclick="openHistoryItem(${i})">Open result</button></div>`).join("")}</div>`;
+}
+function openHistoryItem(i){const x=state.history[i];if(!x)return;showPage("scan");if(x.type==="barcode"){setScanMode("barcode");$("barcodeInput").value=x.code||"";renderBarcodeResult(x.product,x.code,false)}else{setScanMode("photo");renderResult(x.rawText,false)}}
+function deleteHistoryItem(i){state.history.splice(i,1);save();renderHistory();renderHome();toast("Scan deleted")}
+function clearHistory(){if(!state.history.length)return;state.history=[];save();renderHistory();renderHome();toast("History cleared")}
+
+function scannerFeedback(){
+ const el=$("feedback");if(!el)return;el.textContent="Steady…";clearTimeout(window.__scan1);clearTimeout(window.__scan2);
+ window.__scan1=setTimeout(()=>el.textContent="Keep the label inside the frame…",900);
+ window.__scan2=setTimeout(()=>el.textContent="Ready to capture",1800);
+}
+async function startCamera(){
+ try{
+  stopBarcodeCamera();
+  cameraStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"environment"},width:{ideal:1280},height:{ideal:720}},audio:false});
+  const v=$("video");v.srcObject=cameraStream;v.classList.remove("hidden");$("scannerFrame").classList.add("camera-live");$("cameraCaptureRow").classList.remove("hidden");$("useCameraBtn").classList.add("hidden");scannerFeedback();
+  $("scanHint").textContent="Center the ingredients panel. Tap Capture & read when the text is sharp.";
+  await v.play().catch(()=>{});
+  toast("Camera ready");
+ }catch(e){toast("Camera access is unavailable. Use Choose label photo instead.")}
+}
+function stopCamera(){if(cameraStream){cameraStream.getTracks().forEach(t=>t.stop());cameraStream=null}const v=$("video");if(v){v.classList.add("hidden");v.srcObject=null}if($("scannerFrame"))$("scannerFrame").classList.remove("camera-live");if($("cameraCaptureRow"))$("cameraCaptureRow").classList.add("hidden");if($("useCameraBtn"))$("useCameraBtn").classList.remove("hidden")}
+function capturePhoto(){
+ const v=$("video");if(!v||!v.videoWidth){toast("Camera is still starting — try again in a moment.");return}
+ const canvas=document.createElement("canvas");canvas.width=v.videoWidth;canvas.height=v.videoHeight;canvas.getContext("2d").drawImage(v,0,0,canvas.width,canvas.height);
+ canvas.toBlob(blob=>{stopCamera();if(blob)handleImage(blob);else toast("Couldn't capture the frame.")},"image/jpeg",.94)
+}
+async function handleImage(file){
+ if(!file)return;const result=$("result");result.classList.remove("hidden");result.innerHTML=`<div class="card" style="margin-top:18px">${mascotHTML()}<b>Reading your label…</b><p>KIACHE is extracting text and checking it against its food knowledge rules.</p><div id="ocrProgress">0%</div></div>`;
+ try{
+  const r=await Tesseract.recognize(file,"eng",{logger:m=>{if(m.progress&&$("ocrProgress"))$("ocrProgress").textContent=Math.round(m.progress*100)+"%"}});
+  const text=(r.data.text||"").replace(/\r/g,"").trim();
+  if(text.length<8){result.innerHTML=`<div class="card" style="margin-top:18px"><h3 style="font-size:31px">We couldn't read enough text.</h3><p>Try a brighter, closer, glare-free photo with the ingredients panel filling the frame.</p></div>`;return}
+  renderResult(text);
+ }catch(e){result.innerHTML=`<div class="card" style="margin-top:18px"><h3 style="font-size:31px">We couldn't read that label.</h3><p>Try a sharper photo or choose the image again. For critical allergy information, always verify the printed package.</p></div>`}
+}
+function demoScan(){renderResult("Golden Oat Crunch Bar\nIngredients: whole grain oats, sugar, cocoa powder, sunflower oil, milk powder, salt, soy lecithin, natural flavour.\nNutrition per serving: Energy 210 kcal; Protein 6 g; Carbohydrate 28 g; Sugars 10 g; Fat 8 g; Fibre 4 g; Sodium 120 mg.")}
+const sweetenerKeys=["sucralose","aspartame","acesulfameK","saccharin","steviolGlycosides","erythritol","xylitol","sorbitol","maltitol","monkFruit"];
+function parseIngredientFlags(text){
+ const lower=text.toLowerCase(), flags=[];
+ const add=(key,term)=>{if(lower.includes(term))flags.push(ingredientKnowledge[key])};
+ add("sugar","sugar");add("sugar","dextrose");add("sugar","maltose");add("sugar","glucose syrup");add("maltodextrin","maltodextrin");add("palm","palm oil");add("hydrogenated","hydrogenated");
+ add("lecithin","lecithin");add("citric","citric acid");add("ascorbic","ascorbic acid");add("inulin","inulin");add("inulin","chicory");add("colour","colour");add("colour","color");
+ add("sucralose","sucralose");add("aspartame","aspartame");add("acesulfameK","acesulfame");add("saccharin","saccharin");add("steviolGlycosides","stevia");add("steviolGlycosides","steviol");
+ add("erythritol","erythritol");add("xylitol","xylitol");add("sorbitol","sorbitol");add("maltitol","maltitol");add("monkFruit","monk fruit");
+ add("msg","monosodium glutamate");if(/\be\s?621\b|\bins\s?621\b/i.test(text))flags.push(ingredientKnowledge.msg);
+ add("sodiumBenzoate","sodium benzoate");add("potassiumSorbate","potassium sorbate");add("tartrazine","tartrazine");
+ if(/xanthan gum|guar gum|cellulose gum/i.test(text))flags.push(ingredientKnowledge.gums);
+ return [...new Map(flags.filter(Boolean).map(x=>[x.label,x])).values()];
+}
+function detectSweetenerSwap(claimText,ingredientText){
+ const claimHit=/(zero sugar|sugar[\s-]?free|no added sugar|diet\b|\blight\b|\blite\b|low sugar)/i.test(claimText||"");
+ if(!claimHit)return null;
+ const lower=(ingredientText||"").toLowerCase();
+ const found=sweetenerKeys.map(k=>ingredientKnowledge[k]).filter(v=>lower.includes(v.label.toLowerCase().split(" ")[0].replace(/\(.*/,"").trim()));
+ return {claimHit,sweeteners:found};
+}
+function extractName(text){return text.split(/\n/).map(x=>x.trim()).find(x=>x.length>=3&&x.length<=80&&!/^ingredients?|nutrition|energy|protein|carbohydrate|sugars?|fat|fibre|fiber|sodium/i.test(x))||"Scanned food label"}
+function extractNumber(text,re){const m=text.match(re);return m?Number(m[1]):null}
+function renderResult(text,saveToHistory=true){
+ const name=extractName(text), lower=text.toLowerCase(), sugar=extractNumber(text,/sugars?\s*[:\-]?\s*(\d+(?:\.\d+)?)\s*g/i), protein=extractNumber(text,/protein\s*[:\-]?\s*(\d+(?:\.\d+)?)\s*g/i);
+ const flags=parseIngredientFlags(text);const ingredientText=text.split(/ingredients\s*:/i)[1]?.split(/nutrition/i)[0]?.trim()||"Ingredient section not clearly detected.";
+ const allergyHits=state.allergens.filter(a=>{const terms=a.toLowerCase().replace(" / gluten","").split(/[^a-z]+/).filter(Boolean);return terms.some(q=>lower.includes(q))});
+ if(saveToHistory){state.history.unshift({type:"photo",rawText:text,name,date:new Date().toLocaleString(),score:allergyHits.length?"Allergy match":"Label read"});state.history=state.history.slice(0,30);save();renderHistory();renderHome()}
+ window.__lastScanContext={name,text,flags,allergyHits,sugar,protein};
+ const flagHtml=flags.length?flags.map(f=>`<div class="flag-ingredient"><div><strong>${escapeHtml(f.label)}</strong><br><small>${escapeHtml(f.why)}</small></div><span class="pill pill-warn">Check context</span></div>`).join(""):`<p>No known rule-based ingredient flags were triggered by the text we could read. That does not mean the product is universally suitable.</p>`;
+ const swap=detectSweetenerSwap(text,ingredientText);
+ const swapHtml=swap?`<article class="card result-card" style="grid-column:1/-1;background:var(--violet-deep)"><div class="eyebrow">WHAT'S REALLY GOING ON?</div><h3 style="font-size:28px">The label suggests low/zero sugar</h3>
+   <p><b>KIACHE found:</b> ${swap.sweeteners.length?escapeHtml(swap.sweeteners.map(s=>s.label).join(" + ")):"No specific alternative sweetener could be confirmed from the text KIACHE read."}</p>
+   <p><b>What this means:</b> ${swap.sweeteners.length?"The product likely contains very little conventional sugar, with sweetness instead coming from the sweetener(s) above. This is not automatically better or worse — it's a different ingredient doing the same job.":"KIACHE could not confirm which ingredient is providing sweetness from this text. Check the printed ingredient list for the exact sweetener used."}</p></article>`:"";
+ $("result").classList.remove("hidden");
+ $("result").innerHTML=`<div class="result-grid">
+  <article class="card result-card"><div class="eyebrow">QUICK READ</div><h3 style="font-size:28px;margin:8px 0">${escapeHtml(name)}</h3>${allergyHits.length?`<div class="pill pill-bad">Preference match: ${escapeHtml(allergyHits.join(", "))}</div>`:""}<p>KIACHE highlights items to understand; it does not diagnose, prescribe or label a food simply good or bad.</p><button class="btn btn-ghost" style="margin-top:8px" onclick="toggleFavoriteLast()">${isLastScanFavorited()?"★ Saved to favourites":"☆ Save to favourites"}</button></article>
+  <article class="card result-card"><div class="eyebrow">INGREDIENTS</div><h3 style="font-size:31px">What's inside</h3><p>${escapeHtml(ingredientText)}</p></article>
+  <article class="card result-card"><div class="eyebrow">INGREDIENT FLAGS</div><h3 style="font-size:31px">Worth understanding</h3>${flagHtml}</article>
+  <article class="card result-card"><div class="eyebrow">NUTRITION</div><h3 style="font-size:31px">What matters</h3><p>${protein!==null?`Protein: ${protein} g<br>`:""}${sugar!==null?`Sugars: ${sugar} g<br>`:""}Read serving size, sugars, fibre, sodium and fats together rather than judging one number alone.</p></article>
+  ${swapHtml}
+  <article class="card result-card" style="grid-column:1/-1"><div class="reliability-note"><b>${t("reliable")}</b><br>OCR is a text-reading aid and can misread glossy, tiny or stylized print. If an allergy or safety decision matters, verify the physical package. KIACHE will not invent missing data.</div></article>
+ </div>`;
+ toast("Label decoded");
+}
+function isLastScanFavorited(){return state.history[0]?.favorite}
+function toggleFavoriteLast(){if(!state.history.length)return;state.history[0].favorite=!state.history[0].favorite;save();renderHistory();renderHome();toast(state.history[0].favorite?"Saved to favourites":"Removed from favourites");
+ const btn=document.querySelector("#result .btn-ghost")||document.querySelector("#barcodeResult .btn-ghost");if(btn)btn.textContent=state.history[0].favorite?"★ Saved to favourites":"☆ Save to favourites";
+}
+
+function setScanMode(mode){
+ const b=mode==="barcode";$("scanModeBarcode").classList.toggle("hidden",!b);$("scanModePhoto").classList.toggle("hidden",b);$("modeBarcodeBtn").classList.toggle("active",b);$("modePhotoBtn").classList.toggle("active",!b);
+ $("modeBarcodeBtn").setAttribute("aria-selected",b);$("modePhotoBtn").setAttribute("aria-selected",!b);if(b)stopCamera();else stopBarcodeCamera();
+}
+function nutriColor(g){return {a:"#3F8B5D",b:"#86A95A",c:"#C49A55",d:"#B97845",e:"#9D5548"}[g]||"#8E958F"}
+function levelFillColor(l){return l==="high"?"var(--bad)":l==="moderate"?"var(--warn)":l==="low"?"var(--good)":"#B9B3A8"}
+function levelWidth(l){return l==="high"?"90%":l==="moderate"?"55%":l==="low"?"25%":"10%"}
+
+async function lookupBarcode(code){
+ code=(code||"").replace(/\D/g,"");if(!code){toast("Enter a barcode number first");return}
+ $("barcodeStatus").textContent="Checking public food sources…";$("barcodeResult").classList.add("hidden");
+ try{
+  const fields="product_name,brands,image_front_small_url,ingredients_text,nutriscore_grade,nova_group,additives_tags,allergens_tags,nutrient_levels,quantity,nutriments,categories";
+  const res=await fetch(`https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(code)}.json?fields=${fields}`);
+  if(!res.ok)throw new Error("network");
+  const data=await res.json();$("barcodeStatus").textContent="";
+  if(data.status!==1||!data.product){$("barcodeResult").classList.remove("hidden");$("barcodeResult").innerHTML=`<div class="card" style="margin-top:16px"><h3 style="font-size:31px">No verified barcode record found.</h3><p>Try the label reader or search by product name. KIACHE will not invent a product match.</p></div>`;return}
+  renderBarcodeResult(data.product,code);
+ }catch(e){
+  const sampleMap = {
+   "8901058851419": {product_name:"Maggi 2-Minute Masala Noodles",brands:"Nestlé",ingredients_text:"Refined wheat flour, Palm oil, Iodised salt, Wheat gluten, Thickeners (508 & 412), Mixed spices, Sugar.",nutriscore_grade:"d",nova_group:4,nutrient_levels:{sugars:"low",fat:"moderate","saturated-fat":"high",salt:"high"},nutriments:{proteins_100g:8.2,sugars_100g:1.5}},
+   "3017620422003": {product_name:"Nutella Hazelnut Spread",brands:"Ferrero",ingredients_text:"Sugar, palm oil, hazelnuts (13%), skimmed milk powder (8.7%), cocoa (7.4%), soy lecithin.",nutriscore_grade:"e",nova_group:4,nutrient_levels:{sugars:"high",fat:"high","saturated-fat":"high",salt:"low"},nutriments:{proteins_100g:6.3,sugars_100g:56.3}},
+   "5449000000996": {product_name:"Coca-Cola Zero Sugar",brands:"Coca-Cola",ingredients_text:"Carbonated water, caramel colour, phosphoric acid, aspartame, acesulfame K.",nutriscore_grade:"b",nova_group:4,nutrient_levels:{sugars:"low",fat:"low","saturated-fat":"low",salt:"low"},nutriments:{proteins_100g:0,sugars_100g:0}},
+   "8901063141124": {product_name:"NutriChoice Digestive",brands:"Britannia",ingredients_text:"Wheat flour, Whole wheat flour, Palm oil, Sugar, Wheat bran, Milk solids, Lecithin.",nutriscore_grade:"c",nova_group:4,nutrient_levels:{sugars:"moderate",fat:"moderate","saturated-fat":"high",salt:"moderate"},nutriments:{proteins_100g:7.5,sugars_100g:16.5}}
+  };
+  if(sampleMap[code]){$("barcodeStatus").textContent="";renderBarcodeResult(sampleMap[code],code);return}
+  $("barcodeStatus").textContent="";$("barcodeResult").classList.remove("hidden");$("barcodeResult").innerHTML=`<div class="card" style="margin-top:16px"><h3 style="font-size:31px">Couldn't reach the product database.</h3><p>Check your connection, or use the label reader. The app keeps working without pretending missing data is known.</p></div>`;
+ }
+}
+async function searchProduct(q){
+ q=(q||"").trim();if(!q){toast("Enter a food or ingredient to search");return}
+ $("barcodeStatus").textContent="Searching product names and ingredients…";$("barcodeResult").classList.add("hidden");
+ try{
+  const url=`https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=8&fields=code,product_name,brands,image_front_small_url,ingredients_text,nutriscore_grade,nova_group,additives_tags,allergens_tags,nutrient_levels,quantity,nutriments,categories`;
+  const res=await fetch(url);if(!res.ok)throw new Error("network");const data=await res.json();$("barcodeStatus").textContent="";
+  if(!data.products?.length){$("barcodeResult").classList.remove("hidden");$("barcodeResult").innerHTML=`<div class="card" style="margin-top:16px"><h3 style="font-size:31px">No product match found.</h3><p>Try another spelling, a brand name, or scan the printed label instead.</p></div>`;return}
+  $("barcodeResult").classList.remove("hidden");
+  $("barcodeResult").innerHTML=`<div class="card" style="margin-top:16px"><div class="eyebrow">MATCHES</div><h3 style="font-size:31px">Choose the product</h3><div class="history-list">${data.products.slice(0,8).map(p=>`<button class="recent-scan" onclick='selectSearchProduct(${JSON.stringify(p).replace(/</g,"\\u003c")},${JSON.stringify(p.code||"")})'><b>${escapeHtml(p.product_name||"Unnamed product")}</b><br><small>${escapeHtml(p.brands||"")}</small></button>`).join("")}</div><div class="source-note">Search results are from Open Food Facts. Always confirm the package if products look similar.</div></div>`;
+ }catch(e){$("barcodeStatus").textContent="";toast("Search is unavailable right now")}
+}
+function selectSearchProduct(p,code){renderBarcodeResult(p,code||"",true)}
+function renderBarcodeResult(p,code,saveToHistory=true){
+ const grade=(p.nutriscore_grade||"").toLowerCase(),nova=Number(p.nova_group)||null,levels=p.nutrient_levels||{},additives=(p.additives_tags||[]).map(x=>x.replace(/^en:/,"").replace(/-/g," ").toUpperCase()),allergens=(p.allergens_tags||[]).map(x=>x.replace(/^en:/,""));
+ const ingredients=p.ingredients_text||"Ingredient text wasn't provided by this source.";
+ const flags=[];if(nova===4)flags.push({t:"NOVA 4: ultra-processed",c:"pill-warn"});else if(nova===3)flags.push({t:"NOVA 3: processed",c:"pill-warn"});if(levels.sugars==="high")flags.push({t:"High sugar level",c:"pill-warn"});if(levels["saturated-fat"]==="high")flags.push({t:"High saturated-fat level",c:"pill-warn"});if(levels.salt==="high")flags.push({t:"High salt level",c:"pill-warn"});if(additives.length>=3)flags.push({t:`${additives.length} additives listed`,c:"pill-warn"});const ingredientFlags=parseIngredientFlags(ingredients);if(!flags.length&&!ingredientFlags.length)flags.push({t:"No rule-based flags triggered",c:"pill-good"});
+ const allergyHits=state.allergens.filter(a=>{const q=a.toLowerCase().replace(" / gluten","");return ingredients.toLowerCase().includes(q.split(" ")[0])});
+ const nutrientRow=(label,key)=>{const level=levels[key];if(!level)return "";return `<div class="nutrient-bar-row"><span class="label">${label}</span><div class="nutrient-bar-track"><div class="nutrient-bar-fill" style="width:${levelWidth(level)};background:${levelFillColor(level)}"></div></div><span class="level" style="color:${levelFillColor(level)}">${level}</span></div>`};
+ if(saveToHistory){state.history.unshift({type:"barcode",code,product:p,name:p.product_name||`Product ${code}`,date:new Date().toLocaleString(),score:allergyHits.length?"Allergy match":(flags[0]?.t||"Product read")});state.history=state.history.slice(0,30);save();renderHistory();renderHome()}
+ window.__lastScanContext={name:p.product_name||"Unknown",product:p,ingredients,flags,allergyHits};
+ $("barcodeResult").classList.remove("hidden");
+ const scoreExpl=grade?`<p class="source-note"><b>Nutri-Score:</b> A–E summary of nutritional quality using the Nutri-Score method; it is not a diagnosis.</p>`:`<p class="source-note"><b>Nutri-Score:</b> not available for this product. KIACHE keeps the label outside the score circle rather than showing a fake grade.</p>`;
+ const novaExpl=nova?`<p class="source-note"><b>NOVA ${nova}:</b> a processing-category system describing the degree and purpose of processing; it is not a simple “healthy/unhealthy” rating.</p>`:`<p class="source-note"><b>NOVA:</b> not available for this product.</p>`;
+ const claimText=[p.product_name,p.labels,p.categories].filter(Boolean).join(" ");
+ const swap=detectSweetenerSwap(claimText,ingredients);
+ const swapHtml=swap?`<article class="card result-card" style="grid-column:1/-1;background:var(--violet-deep)"><div class="eyebrow">WHAT'S REALLY GOING ON?</div><h3 style="font-size:28px">The label suggests low/zero sugar</h3>
+   <p><b>KIACHE found:</b> ${swap.sweeteners.length?escapeHtml(swap.sweeteners.map(s=>s.label).join(" + ")):"No specific alternative sweetener could be confirmed from available data."}</p>
+   <p><b>What this means:</b> ${swap.sweeteners.length?"Sweetness likely comes from the sweetener(s) above rather than conventional sugar. This is a different ingredient doing the same job — not automatically better or worse.":"Check the printed ingredient list for the exact sweetener used, since this source didn't confirm it."}</p></article>`:"";
+ const traces=(p.traces_tags||[]).map(x=>x.replace(/^en:/,""));
+ const allergenStatusHtml=`<article class="card result-card" style="grid-column:1/-1"><div class="eyebrow">ALLERGEN STATEMENT</div><h3 style="font-size:28px">Contains vs. may contain</h3>
+  <p><b>Contains (source-listed):</b> ${allergens.length?escapeHtml(allergens.join(", ")):"No allergens declared by this source."}</p>
+  <p><b>May contain / traces:</b> ${traces.length?escapeHtml(traces.join(", ")):"No traces statement provided by this source."}</p>
+  <p class="source-note">Absence of a listed allergen is not a guarantee. Always check the physical package for a serious allergy.</p></article>`;
+ $("barcodeResult").innerHTML=`<div class="result-grid">
+  <article class="card result-card"><div class="eyebrow">PRODUCT</div><h3 style="font-size:28px;margin:8px 0">${escapeHtml(p.product_name||"Unnamed product")}</h3>${p.brands?`<div style="color:var(--muted);font-size:14px;margin-bottom:10px">${escapeHtml(p.brands)}${p.quantity?" · "+escapeHtml(p.quantity):""}</div>`:""}
+   <div class="badge-row">
+    ${grade?`<div><div class="score-badge" style="background:${nutriColor(grade)}">${grade.toUpperCase()}</div><div class="score-meta" style="text-align:center;margin-top:4px">Nutri-Score</div></div>`:`<span class="pill pill-warn">Nutri-Score: not available</span>`}
+    ${nova?`<div><div class="score-badge" style="background:${nova>=4?"var(--bad)":nova===3?"var(--warn)":"var(--good)"}">${nova}</div><div class="score-meta" style="text-align:center;margin-top:4px">NOVA</div></div>`:`<span class="pill pill-warn">NOVA: not available</span>`}
+   </div>${scoreExpl}${novaExpl}${flags.map(f=>`<span class="pill ${f.c}">${escapeHtml(f.t)}</span>`).join("")}${allergyHits.length?`<div class="pill pill-bad">Check allergy preference: ${escapeHtml(allergyHits.join(", "))}</div>`:""}
+   <div><button class="btn btn-ghost" style="margin-top:10px" onclick="toggleFavoriteLast()">${isLastScanFavorited()?"★ Saved to favourites":"☆ Save to favourites"}</button></div>
+  </article>
+  <article class="card result-card"><div class="eyebrow">NUTRIENT LEVELS</div><h3 style="font-size:31px">What matters</h3><div class="nutrient-bars">${nutrientRow("Sugar","sugars")}${nutrientRow("Fat","fat")}${nutrientRow("Saturated fat","saturated-fat")}${nutrientRow("Salt","salt")}</div>${!Object.keys(levels).length?'<p class="source-note">Nutrient-level data was not provided by the source.</p>':''}</article>
+  <article class="card result-card"><div class="eyebrow">INGREDIENTS</div><h3 style="font-size:31px">What's inside</h3><p>${escapeHtml(ingredients)}</p>${allergens.length?`<p><b>Source-listed allergens:</b> ${allergens.map(escapeHtml).join(", ")}</p>`:""}</article>
+  <article class="card result-card"><div class="eyebrow">INGREDIENT FLAGS</div><h3 style="font-size:31px">Worth understanding</h3>${ingredientFlags.length?ingredientFlags.map(f=>`<div class="flag-ingredient"><div><strong>${escapeHtml(f.label)}</strong><br><small>${escapeHtml(f.why)}</small></div><span class="pill pill-warn">Context</span></div>`).join(""):"<p>No rule-based ingredient flags were triggered.</p>"}</article>
+  <article class="card result-card"><div class="eyebrow">ADDITIVES</div><h3 style="font-size:31px">Worth knowing</h3><p>${additives.length?`${additives.length} additive${additives.length>1?"s":""} listed: ${escapeHtml(additives.join(", "))}.`:"No additives were listed by the source."}</p></article>
+  ${swapHtml}
+  ${allergenStatusHtml}
+  <article class="card result-card" style="grid-column:1/-1"><div class="reliability-note"><b>Source & accuracy</b><br>Product data shown here comes from Open Food Facts when available. It is an open, community-maintained database, so packaging should remain the final check for allergens and current formulation. KIACHE does not invent missing fields.</div></article>
+ </div>`;
+ toast("Product found");
+}
+
+async function startBarcodeCamera(){
+ if(!navigator.mediaDevices?.getUserMedia){toast("Camera is not available in this browser.");return}
+ if(!("BarcodeDetector" in window)){toast("Live barcode detection isn't supported here. Type the barcode instead.");return}
+ try{
+  stopCamera();barcodeStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"environment"}},audio:false});
+  const v=$("barcodeVideo");v.srcObject=barcodeStream;v.classList.remove("hidden");await v.play().catch(()=>{});
+  $("barcodeStatus").textContent="Point the camera at the barcode…";const detector=new BarcodeDetector({formats:["ean_13","ean_8","upc_a","upc_e","code_128"]});clearInterval(barcodeDetectionLoop);
+  barcodeDetectionLoop=setInterval(async()=>{try{const codes=await detector.detect(v);if(codes.length){const code=codes[0].rawValue;stopBarcodeCamera();$("barcodeInput").value=code;lookupBarcode(code)}}catch(e){}},500);
+ }catch(e){toast("Camera access is unavailable. Type the barcode instead.")}
+}
+function stopBarcodeCamera(){clearInterval(barcodeDetectionLoop);barcodeDetectionLoop=null;if(barcodeStream){barcodeStream.getTracks().forEach(t=>t.stop());barcodeStream=null}const v=$("barcodeVideo");if(v){v.classList.add("hidden");v.srcObject=null}}
+
+let chatExplainMode="eli5";
+function setChatExplainMode(mode){chatExplainMode=mode;$("chatModeEli5").classList.toggle("active",mode==="eli5");$("chatModeSci").classList.toggle("active",mode==="scientist");toast(mode==="eli5"?"Now explaining simply":"Now explaining like a scientist")}
+function toggleChat(){$("chat").classList.toggle("hidden");if(!$("chat").classList.contains("hidden"))renderGuidedAI()}
+function renderGuidedAI(){
+ const body=$("chatBody");if(!body)return;
+ const qs=[["ingredients","aiQIngredients"],["nutrition","aiQNutrition"],["allergens","aiQAllergens"],["processing","aiQProcessing"],["score","aiQScore"],["data","aiQData"]];
+ body.innerHTML=`<div class="msg bot">${escapeHtml(t("chatWelcome"))}</div>${qs.map(([key,q])=>`<div class="ai-topic"><button onclick="answerAI('${key}')">${escapeHtml(t(q))}</button></div>`).join("")}<div class="msg bot">You can also type a question below — try an ingredient name, an E-number (like "E621"), or "compare these two products".</div>`;
+ if($("chatInput"))$("chatInput").value="";
+}
+function answerAI(key){
+ const c=window.__lastScanContext;let answer="";
+ if(!c){answer=t("noContext");}
+ else if(key==="ingredients"){const fs=(c.flags||[]);answer=fs.length?`The current result flagged ${fs.map(x=>x.label).join(", ")}. These flags are prompts to understand the ingredient or label context, not proof that the food is harmful.`:"No rule-based ingredient flags were triggered by the text available to KIACHE."}
+ else if(key==="nutrition"){answer=`KIACHE found ${c.sugar!=null?`about ${c.sugar} g sugars`:"no clear sugar value"}${c.protein!=null?` and ${c.protein} g protein`:""}. Use the full nutrition panel and serving size for the complete picture.`}
+ else if(key==="allergens"){answer=c.allergyHits?.length?`Your selected allergy preferences matched: ${c.allergyHits.join(", ")}. Please verify the package's allergen statement before eating.`:"No selected allergy preference matched the text KIACHE could read. This is not a guarantee of allergen absence."}
+ else if(key==="processing"){const n=c.product?.nova_group;answer=n?`NOVA ${n} is a category describing the degree and purpose of processing. It should be read alongside nutrition, ingredients and the type of food.`:"NOVA information is not available in this result."}
+ else if(key==="score"){const g=(c.product?.nutriscore_grade||"").toUpperCase();answer=g?`Nutri-Score ${g} is a front-of-pack nutritional summary based on the Nutri-Score method. It is not a medical score and should not replace the full label.`:"Nutri-Score is not available for this product."}
+ else if(key==="data"){answer=c.product?"This result uses product data returned from Open Food Facts. Because formulations can change and the database is community-maintained, check the current package for critical details.": "This result uses OCR from the label image. OCR can misread small or glossy print, so verify critical information on the package."}
+ $("chatBody").insertAdjacentHTML("beforeend",`<div class="ai-question">${escapeHtml(t("yes"))} — ${escapeHtml(t("aiQ"+key.charAt(0).toUpperCase()+key.slice(1)))}</div><div class="ai-answer">${escapeHtml(answer)}</div>`);
+ $("chatBody").scrollTop=$("chatBody").scrollHeight;
+}
+function handleChatAsk(ev){
+ ev.preventDefault();
+ const input=$("chatInput");const q=(input.value||"").trim();if(!q){return false}
+ $("chatBody").insertAdjacentHTML("beforeend",`<div class="msg me">${escapeHtml(q)}</div>`);
+ input.value="";
+ const answer=answerFreeTextQuestion(q);
+ $("chatBody").insertAdjacentHTML("beforeend",`<div class="msg bot">${escapeHtml(answer)}</div>`);
+ $("chatBody").scrollTop=$("chatBody").scrollHeight;
+ return false;
+}
+function answerFreeTextQuestion(q){
+ const lower=q.toLowerCase();
+ if(/compare/.test(lower))return "Head to Compare products (the ⇄ icon in the top header) and enter two barcodes — KIACHE will lay out the nutrients side by side and won't declare one universal winner.";
+ if(/portion|how much (of this )?should i eat|serving size/.test(lower)){
+  const c=window.__lastScanContext;if(c?.product?.nutriments||c?.sugar!=null)return "KIACHE can show typical serving information from the label, but it doesn't have enough information to confidently prescribe a personal portion. Use the serving size on the package as a starting point, and consider your own goals and any advice from a healthcare professional.";
+  return "Scan a product first, then ask this again — KIACHE will reference its serving-size information where available.";
+ }
+ for(const [key,entry] of Object.entries(ingredientKnowledge)){
+  if(ingredientMatchesQuery(key,entry,lower)||lower.includes(entry.label.toLowerCase().split(" ")[0].replace(/\(.*/,"").trim())){
+   const long=chatExplainMode==="scientist"?(entry.scientist||entry.why):(entry.eli5||entry.why);
+   return `${entry.label}${entry.eNumber?` (${entry.eNumber})`:""}: ${long}${entry.watch?" · Worth knowing: "+entry.watch:""}`;
+  }
+ }
+ const c=window.__lastScanContext;
+ if(c&&/allerg/.test(lower))return c.allergyHits?.length?`Your selected allergy preferences matched: ${c.allergyHits.join(", ")}. Always check the physical package if a serious allergy is involved.`:"No selected allergy preference matched this result's text — that isn't a guarantee of absence, though.";
+ if(c&&/suitable|diet|vegan|vegetarian|halal|jain/.test(lower))return "KIACHE can't certify dietary suitability. Check the ingredient list above for animal-derived items and look for an official certification mark on the package.";
+ return "I don't have enough information to determine that from what KIACHE has read so far. Try naming a specific ingredient, an E-number, or scan a product first for more specific answers.";
+}
+
+const comparePriorities=["Lower sugar","Higher protein","Higher fibre","Lower sodium","Fewer sweeteners","Fewer additives","Lower calories"];
+let compareSelectedPriorities=["Lower sugar","Higher fibre"];
+function renderComparePriorityChips(){
+ const el=$("comparePriorityChips");if(!el)return;
+ el.innerHTML=comparePriorities.map(p=>`<button class="chip ${compareSelectedPriorities.includes(p)?"active":""}" onclick="toggleComparePriority('${p.replace(/'/g,"\\'")}')">${p}</button>`).join("");
+}
+function toggleComparePriority(p){compareSelectedPriorities=compareSelectedPriorities.includes(p)?compareSelectedPriorities.filter(x=>x!==p):[...compareSelectedPriorities,p];renderComparePriorityChips();if($("compareResult").innerHTML.trim())runCompare()}
+async function fetchProductForCompare(code){
+ code=(code||"").replace(/\D/g,"");if(!code)return null;
+ const sampleMap = {
+   "8901063141124": {product_name:"NutriChoice Digestive",brands:"Britannia",ingredients_text:"Wheat flour, Whole wheat flour, Palm oil, Sugar, Wheat bran, Milk solids, Lecithin.",nutriscore_grade:"c",nova_group:4,additives_tags:["en:e322","en:e330"],nutriments:{"energy-kcal_100g":478,proteins_100g:7.5,sugars_100g:16.5,fiber_100g:6.2,sodium_100g:0.38}},
+   "3017620422003": {product_name:"Nutella Hazelnut Spread",brands:"Ferrero",ingredients_text:"Sugar, palm oil, hazelnuts (13%), skimmed milk powder (8.7%), cocoa (7.4%), soy lecithin.",nutriscore_grade:"e",nova_group:4,additives_tags:["en:e322"],nutriments:{"energy-kcal_100g":539,proteins_100g:6.3,sugars_100g:56.3,fiber_100g:3.4,sodium_100g:0.04}}
+ };
+ if(sampleMap[code])return sampleMap[code];
+ const fields="product_name,brands,ingredients_text,nutriscore_grade,nova_group,additives_tags,allergens_tags,nutrient_levels,nutriments";
+ try{
+  const res=await fetch(`https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(code)}.json?fields=${fields}`);
+  if(!res.ok)return null;const data=await res.json();if(data.status!==1||!data.product)return null;return data.product;
+ }catch(e){return null}
+}
+function sweetenerCount(ingredientsText){const lower=(ingredientsText||"").toLowerCase();return sweetenerKeys.filter(k=>lower.includes(ingredientKnowledge[k].label.toLowerCase().split(" ")[0])).length}
+async function runCompare(){
+ const codeA=$("compareBarcodeA").value.trim(),codeB=$("compareBarcodeB").value.trim();
+ if(!codeA||!codeB){toast("Enter both barcodes to compare");return}
+ $("compareResult").innerHTML=`<div class="card">${mascotHTML()}<p>Fetching both products…</p></div>`;
+ const [a,b]=await Promise.all([fetchProductForCompare(codeA),fetchProductForCompare(codeB)]);
+ if(!a||!b){$("compareResult").innerHTML=`<div class="card"><h3 style="font-size:28px">Couldn't find one or both products.</h3><p>Double-check the barcodes, or try 8901063141124 and 3017620422003.</p></div>`;return}
+ const n=p=>p.nutriments||{};
+ const rows=[
+  {label:"Calories (per 100g)",a:n(a)["energy-kcal_100g"],b:n(b)["energy-kcal_100g"],lowerBetter:true},
+  {label:"Protein (per 100g)",a:n(a).proteins_100g,b:n(b).proteins_100g,lowerBetter:false},
+  {label:"Sugars (per 100g)",a:n(a).sugars_100g,b:n(b).sugars_100g,lowerBetter:true},
+  {label:"Fibre (per 100g)",a:n(a).fiber_100g,b:n(b).fiber_100g,lowerBetter:false},
+  {label:"Sodium (per 100g, mg)",a:n(a).sodium_100g!=null?n(a).sodium_100g*1000:null,b:n(b).sodium_100g!=null?n(b).sodium_100g*1000:null,lowerBetter:true},
+  {label:"Additives listed",a:(a.additives_tags||[]).length,b:(b.additives_tags||[]).length,lowerBetter:true},
+  {label:"Sweeteners detected",a:sweetenerCount(a.ingredients_text),b:sweetenerCount(b.ingredients_text),lowerBetter:true}
+ ];
+ const rowsHtml=rows.map(r=>{
+  const av=r.a,bv=r.b;let awin=false,bwin=false;
+  if(av!=null&&bv!=null&&av!==bv){if(r.lowerBetter){awin=av<bv;bwin=bv<av}else{awin=av>bv;bwin=bv>av}}
+  return `<tr><td style="text-align:left">${escapeHtml(r.label)}</td><td class="${awin?"win":""}">${av!=null?Math.round(av*10)/10:"—"}</td><td class="${bwin?"win":""}">${bv!=null?Math.round(bv*10)/10:"—"}</td></tr>`;
+ }).join("");
+ const priorityMap={"Lower sugar":"Sugars (per 100g)","Higher protein":"Protein (per 100g)","Higher fibre":"Fibre (per 100g)","Lower sodium":"Sodium (per 100g, mg)","Fewer sweeteners":"Sweeteners detected","Fewer additives":"Additives listed","Lower calories":"Calories (per 100g)"};
+ const verdicts=(compareSelectedPriorities.length?compareSelectedPriorities:comparePriorities).map(pr=>{
+  const row=rows.find(r=>r.label===priorityMap[pr]);if(!row||row.a==null||row.b==null||row.a===row.b)return null;
+  const aBetter=row.lowerBetter?row.a<row.b:row.a>row.b;
+  return `<div>If your priority is <b>${escapeHtml(pr.toLowerCase())}</b> → <b>${aBetter?escapeHtml(a.product_name||"Product A"):escapeHtml(b.product_name||"Product B")}</b></div>`;
+ }).filter(Boolean);
+ $("compareResult").innerHTML=`<div class="card" style="padding:24px">
+  <table class="compare-table"><thead><tr><th style="text-align:left">Metric</th><th>${escapeHtml(a.product_name||"Product A")}</th><th>${escapeHtml(b.product_name||"Product B")}</th></tr></thead><tbody>${rowsHtml}</tbody></table>
+  <div class="compare-verdict"><b>Before you buy</b>${verdicts.length?verdicts.map(v=>`<div style="margin-top:6px">${v}</div>`).join(""):"<div style=\"margin-top:6px\">Not enough matching data to compare on the selected priorities.</div>"}
+  <p class="source-note" style="margin-top:10px">KIACHE does not declare a single universal winner — the better choice depends on what matters to you.</p></div>
+ </div>`;
+}
+function mascotHTML(){return `<div class="mascot-track"><div class="mascot"><svg width="46" height="46" viewBox="0 0 46 46"><circle cx="23" cy="23" r="21" fill="#6A4C93"/><circle cx="16" cy="20" r="2.4" fill="#fff"/><circle cx="30" cy="20" r="2.4" fill="#fff"/><path d="M14 29c3 4 15 4 18 0" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round"/></svg></div></div>`}
+init();
+</script>
+</body>
 </html>
