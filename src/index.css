@@ -1,0 +1,103 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --cream: #FBF8F2;
+    --white: #FFFFFF;
+    --ink: #26302A;
+    --teal: #3F5D4B;
+    --teal-soft: #E8F0EA;
+    --ochre: #B89568;
+    --gold-soft: #E6D4BA;
+    --purple: #6A4C93;
+    --violet-deep: #F1EBF7;
+    --lav: #F1EBF7;
+    --green: #E8F0EA;
+    --line: #DED6C9;
+    --tan: #B89568;
+    --tan-soft: #F1E6D7;
+    --muted: rgba(11, 13, 12, 0.58);
+    --good: #1E8F4E;
+    --good-soft: #E7EFE3;
+    --warn: #8C6A1F;
+    --warn-soft: #F1EADA;
+    --bad: #8C2E27;
+    --bad-soft: #F1E1DD;
+  }
+
+  html,
+  body {
+    margin: 0;
+    min-height: 100%;
+    color: var(--ink);
+    font-family: "DM Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+    background-color: var(--cream);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  .font-serif {
+    font-family: "DM Serif Display", Georgia, serif;
+    font-weight: 400;
+    line-height: 1.08;
+    text-wrap: balance;
+  }
+
+  .font-mono {
+    font-family: "JetBrains Mono", monospace;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@keyframes scanBeam {
+  0%,
+  100% {
+    transform: translateY(0%);
+  }
+  50% {
+    transform: translateY(220px);
+  }
+}
+
+@keyframes mascotMove {
+  0%,
+  100% {
+    transform: translateX(0px);
+  }
+  50% {
+    transform: translateX(180px);
+  }
+}
+
+@keyframes mascotHop {
+  0%,
+  100% {
+    transform: translateY(0) scaleY(1);
+  }
+  50% {
+    transform: translateY(-8px) scaleY(1.04);
+  }
+}
+
+.animate-scan-beam {
+  animation: scanBeam 2.2s infinite ease-in-out;
+}
+
+.animate-mascot-move {
+  animation: mascotMove 6.5s ease-in-out infinite;
+}
+
+.animate-mascot-hop {
+  animation: mascotHop 0.55s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-scan-beam,
+  .animate-mascot-move,
+  .animate-mascot-hop {
+    animation: none;
+  }
+}

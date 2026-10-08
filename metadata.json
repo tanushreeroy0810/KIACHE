@@ -1,0 +1,10 @@
+{
+  "name": "KIACHE? — Scan. Decode. Understand.",
+  "description": "Mobile-first food label reader with barcode lookup, OCR, ingredient flags, nutrition context, ingredient dictionary, product comparison, and guided food questions.",
+  "requestFramePermissions": [
+    "camera"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
